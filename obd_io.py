@@ -74,7 +74,7 @@ class OBDPort:
      def __init__(self,portnum,_notify_window,SERTIMEOUT,RECONNATTEMPTS):
          """Initializes port by resetting device and gettings supported PIDs. """
          # These should really be set by the user.
-         baud     = 38400
+         baud     = 38400 # 38400, 9600 or 115200
          databits = 8
          par      = serial.PARITY_NONE  # parity
          sb       = 1                   # stop bits
@@ -111,8 +111,16 @@ class OBDPort:
             return None
          
          debug_display(self._notify_window, 2, "atz response:" + self.ELMver)
-         self.send_command("ate0")  # echo off
+
+         # Echo off
+         self.send_command("ate0")
          debug_display(self._notify_window, 2, "ate0 response:" + self.get_result())
+
+         # Set mode to CAN (11 bit ID, 500 kbaud)
+         self.send_command("at sp 6")
+         debug_display(self._notify_window, 2, "at sp response:" + self.get_result())
+
+
          self.send_command("0100")
          ready = self.get_result()
          

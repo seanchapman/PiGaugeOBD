@@ -131,21 +131,7 @@ class OBDPanelGauges(wx.Panel):
         self.bitmap = wx.BitmapFromImage(image) 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
-        # Create an accelerator table
-        lid = wx.NewId()
-        cid = wx.NewId()
-        rid = wx.NewId()
-        self.Bind(wx.EVT_MENU, self.onCtrlC, id=cid)
-        self.Bind(wx.EVT_MENU, self.onLeft, id=lid)
-        self.Bind(wx.EVT_MENU, self.onRight, id=rid)
-        self.accel_tbl = wx.AcceleratorTable([ 
-                (wx.ACCEL_CTRL, ord('C'), cid), 
-                (wx.ACCEL_NORMAL, wx.WXK_LEFT, lid), 
-                (wx.ACCEL_NORMAL, wx.WXK_RIGHT, rid), 
-                ])
-        self.SetAcceleratorTable(self.accel_tbl)
-
-        # Handle events for mouse clicks
+        # Handle events for touchscreen taps
         self.Bind(wx.EVT_LEFT_DOWN, self.onLeft)
         self.Bind(wx.EVT_RIGHT_DOWN, self.onRight)
         
@@ -251,7 +237,7 @@ class OBDPanelGauges(wx.Panel):
         # Timer for update
         self.timer = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.refresh, self.timer)
-        self.timer.Start(1500)
+        self.timer.Start(500)
 
 
     def refresh(self, event):
@@ -327,14 +313,6 @@ class OBDLoadingPanel(wx.Panel):
         self.bitmap = wx.BitmapFromImage(image) 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
-        # Create an accelerator table
-        cid = wx.NewId()
-        self.Bind(wx.EVT_MENU, self.onCtrlC, id=cid)
-        self.accel_tbl = wx.AcceleratorTable([ 
-                (wx.ACCEL_CTRL, ord('C'), cid), 
-                ])
-        self.SetAcceleratorTable(self.accel_tbl)
-
         # Connection
         self.obdCap = None
 
@@ -362,7 +340,7 @@ class OBDLoadingPanel(wx.Panel):
         
         self.timer0 = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.connect, self.timer0)
-        self.timer0.Start(333)
+        self.timer0.Start(500)
 
 
     def connect(self, event):
@@ -425,7 +403,7 @@ class OBDFrame(wx.Frame):
         """
         wx.Frame.__init__(self, None, wx.ID_ANY, "OBD-Pi")
 
-        image = wx.Image(BACKGROUND_FILENAME) 
+        image = wx.Image(LOADING_BG_FILENAME) 
         width, height = wx.GetDisplaySize() 
         image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
         self.bitmap = wx.BitmapFromImage(image) 
