@@ -283,12 +283,12 @@ class OBDLoadingPanel(wx.Panel):
         """
         super(OBDLoadingPanel, self).__init__(*args, **kwargs)
 
-        # "Loading Background" image
-        image = wx.Image(LOADING_BG_FILENAME) 
-        width, height = wx.GetDisplaySize() 
+        # Create background image
+        image = wx.Image(LOADING_BG_FILENAME)
+        width, height = wx.GetDisplaySize()
         image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
-        self.bitmap = wx.BitmapFromImage(image) 
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        bitmap = wx.BitmapFromImage(image) 
+		control = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
 
         # Connection
         self.obdCap = None
@@ -308,7 +308,7 @@ class OBDLoadingPanel(wx.Panel):
         """
 		
 		# Setup loading output text box
-        self.textCtrl = wx.TextCtrl(self, pos=(160, 20), size=(150,200), style=wx.TE_READONLY | wx.TE_MULTILINE)
+        self.textCtrl = wx.TextCtrl(self, pos=(150, 100), size=(150,200), style=wx.TE_READONLY | wx.TE_MULTILINE)
         self.textCtrl.SetBackgroundColour('#21211f')
         self.textCtrl.SetForegroundColour(wx.WHITE)
         self.textCtrl.SetFont(wx.Font(10, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco"))
@@ -363,10 +363,7 @@ class OBDLoadingPanel(wx.Panel):
         self.GetParent().Close()
 
     def OnPaint(self, event): 
-        self.Paint(wx.PaintDC(self)) 
-
-    def Paint(self, dc): 
-        dc.DrawBitmap(self.bitmap, 0, 0)     
+        self.Paint(wx.PaintDC(self))
         
 #-------------------------------------------------------------------------------
 
@@ -380,12 +377,6 @@ class OBDFrame(wx.Frame):
         Constructor.
         """
         wx.Frame.__init__(self, None, wx.ID_ANY, "OBD-Pi")
-
-        image = wx.Image(LOADING_BG_FILENAME) 
-        width, height = wx.GetDisplaySize() 
-        image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
-        self.bitmap = wx.BitmapFromImage(image) 
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
 
         self.panelLoading = OBDLoadingPanel(self)
         self.sizer = wx.BoxSizer(wx.VERTICAL)
@@ -418,10 +409,7 @@ class OBDFrame(wx.Frame):
         self.Layout()
 
     def OnPaint(self, event): 
-        self.Paint(wx.PaintDC(self)) 
-
-    def Paint(self, dc): 
-        dc.DrawBitmap(self.bitmap, 0, 0)     
+        self.Paint(wx.PaintDC(self))     
 
 #-------------------------------------------------------------------------------
 
