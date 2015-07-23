@@ -1,8 +1,8 @@
-pyobd
+PiGaugeOBD
 =====
 
 <pre>OBD-PiTFT: Display Car Diagnostics (OBD-II) Data On Adafruit's PiTFT Touchscreen Display For Raspberry Pi 
-
+TODO:
 In this tutorial you will learn how to connect your Raspberry Pi to a Bluetooth OBD-II adapter and display realtime engine data on Adafruit's PiTFT touchscreen display.
 
 Hardware Required:
