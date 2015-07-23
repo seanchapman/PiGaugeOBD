@@ -71,25 +71,6 @@ class OBDConnection(object):
 
 #-------------------------------------------------------------------------------
 
-class OBDStaticBox(wx.StaticBox):
-    """
-    OBD StaticBox.
-    """
-
-    def __init__(self, *args, **kwargs):
-        """
-        Constructor.
-        """
-        wx.StaticBox.__init__(self, *args, **kwargs)
-
-    def OnPaint(self, event): 
-        self.Paint(wx.PaintDC(self)) 
-
-    def Paint(self, dc): 
-        dc.DrawBitmap(self.bitmap, 0, 0)     
-
-#-------------------------------------------------------------------------------
-
 class OBDPanelGauges(wx.Panel):
     """
     Panel for gauges.
@@ -172,7 +153,7 @@ class OBDPanelGauges(wx.Panel):
             
             (name, value, unit) = self.port.sensor(index)
 
-            box = OBDStaticBox(self, wx.ID_ANY)
+            box = wx.StaticBox(self, wx.ID_ANY)
             self.boxes.append(box)
             boxSizer = wx.StaticBoxSizer(box, wx.VERTICAL)
 
@@ -199,7 +180,7 @@ class OBDPanelGauges(wx.Panel):
         # Add invisible boxes if necessary
         nsensors = len(sensors)
         for i in range(1-nsensors):
-            box = OBDStaticBox(self)
+            box = wx.StaticBox(self)
             boxSizer = wx.StaticBoxSizer(box, wx.VERTICAL)
             self.boxes.append(box)
             box.Show(False)
@@ -288,7 +269,7 @@ class OBDLoadingPanel(wx.Panel):
         width, height = wx.GetDisplaySize()
         image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
         bitmap = wx.BitmapFromImage(image) 
-		control = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
+        control = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
 
         # Connection
         self.obdCap = None
@@ -307,8 +288,8 @@ class OBDLoadingPanel(wx.Panel):
         Display the loading screen.
         """
 		
-		# Setup loading output text box
-        self.textCtrl = wx.TextCtrl(self, pos=(150, 100), size=(150,200), style=wx.TE_READONLY | wx.TE_MULTILINE)
+        # Setup loading output text box
+        self.textCtrl = wx.TextCtrl(self, pos=(10,170), size=(300,60), style=wx.TE_READONLY | wx.TE_MULTILINE)
         self.textCtrl.SetBackgroundColour('#21211f')
         self.textCtrl.SetForegroundColour(wx.WHITE)
         self.textCtrl.SetFont(wx.Font(10, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco"))
@@ -341,7 +322,7 @@ class OBDLoadingPanel(wx.Panel):
             return False
         else:
             self.textCtrl.Clear()
-            #self.textCtrl.AppendText(" Connected\n")
+            self.textCtrl.AppendText(" Connected!\n")
             port_name = self.obdCap.get_port_name()
             if port_name:
                 self.textCtrl.AppendText(" Failed Connection: " + port_name +"\n")

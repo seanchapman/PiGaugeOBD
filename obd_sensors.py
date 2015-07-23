@@ -128,21 +128,35 @@ def hex_to_bitstring(str):
                 bitstring += '0'                
     return bitstring
 
+# Sensor class used for data values with units
 class Sensor:
-    def __init__(self, shortName, sensorName, sensorcommand, sensorValueFunction, u):
+    def __init__(self, shortName, sensorName, sensorcommand, sensorValueFunc, strUnit):
         self.shortname = shortName
         self.name = sensorName
-        self.cmd  = sensorcommand
-        self.value= sensorValueFunction
-        self.unit = u
+        self.cmd = sensorcommand
+        self.value = sensorValueFunc
+        self.unit = strUnit
+        
+# Adapter sensor class used for data values with units, but also min/max values and lower and upper safe limits
+# The safe lower limit is the lower bound for a safe value (e.g. the lowest standard operating temperature)
+# The safe upper limit is the higher bound for a safe value (e.g. the highest standard operating temperature. If it rises above this, there is a problem)
+class SensorLimits(Sensor):
+    def __init__(self, shortName, sensorName, sensorCmd, sensorValueFunc, strUnit, min, max, lowerSafeLimit, upperSafeLimit):
+        Sensor.__init__(self, shortName, sensorName, sensorCmd, sensorValueFunc, strUnit)
+        self.min = min
+        self.max = max
+        self.lowerSafeLimit = lowerSafeLimit
+        self.upperSafeLimit = upperSafeLimit
+
 
 SENSORS = [
+    SensorLimits("temp", "Coolant Temp", "0105", tempCelcius, "C", 20, 20, 20, 20),
+    SensorLimits("speed", "Vehicle Speed", "010D1", speedMph, "MPH", 0, 160, 0, 160),
     Sensor("pids"                  , "Supported PIDs"				, "0100" , hex_to_bitstring ,""       ), 
     Sensor("dtc_status"            , "S-S DTC Cleared"				, "0101" , dtc_decrypt      ,""       ),    
     Sensor("dtc_ff"                , "DTC C-F-F"					, "0102" , cpass            ,""       ),      
     Sensor("fuel_status"           , "Fuel System Stat"				, "0103" , cpass            ,""       ),
     Sensor("load"                  , "Calc Load Value"				, "01041", percent_scale    ,""       ),    
-    Sensor("temp"                  , "Coolant Temp"					, "0105" , tempCelcius      ,"C"      ),
     Sensor("short_term_fuel_trim_1", "S-T Fuel Trim"				, "0106" , fuel_trim_percent,"%"      ),
     Sensor("long_term_fuel_trim_1" , "L-T Fuel Trim"				, "0107" , fuel_trim_percent,"%"      ),
     Sensor("short_term_fuel_trim_2", "S-T Fuel Trim"				, "0108" , fuel_trim_percent,"%"      ),
@@ -150,7 +164,6 @@ SENSORS = [
     Sensor("fuel_pressure"         , "FuelRail Pressure"			, "010A" , cpass            ,""       ),
     Sensor("manifold_pressure"     , "Intk Manifold"				, "010B" , intake_m_pres    ,"psi"    ),
     Sensor("rpm"                   , "Engine RPM"					, "010C1", rpm              ,""       ),
-    Sensor("speed"                 , "Vehicle Speed"				, "010D1", speedMph         ,"MPH"    ),
     Sensor("timing_advance"        , "Timing Advance"				, "010E" , timing_advance   ,"degrees"),
     Sensor("intake_air_temp"       , "Intake Air Temp"				, "010F" , tempCelcius      ,"C"      ),
     Sensor("maf"                   , "AirFlow Rate(MAF)"			, "0110" , maf              ,"lb/min" ),
