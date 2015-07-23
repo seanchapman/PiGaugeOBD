@@ -19,9 +19,8 @@ from obd_sensors import *
 #-------------------------------------------------------------------------------
 
 # OBD variable
-BACKGROUND_FILENAME = "bg_black.jpg"
 GAUGE_FILENAME		= "frame_C1.jpg"
-LOGO_FILENAME 		= "cowfish.png"
+LOADING_BG_FILENAME	= "loading_bg.png"
 
 #-------------------------------------------------------------------------------
 
@@ -34,29 +33,29 @@ class OBDConnection(object):
     """
     
     def __init__(self):
-        self.c = OBD_Capture()
+        self.obdCap = OBD_Capture()
 
     def get_capture(self):
-        return self.c
+        return self.obdCap
 
     def connect(self):
-        self.t = Thread(target=obd_connect, args=(self.c,))
+        self.t = Thread(target=obd_connect, args=(self.obdCap,))
         self.t.start()
 
     def is_connected(self):
-        return self.c.is_connected()
+        return self.obdCap.is_connected()
 
     def get_output(self):
-        if self.c and self.c.is_connected():
-            return self.c.capture_data()
+        if self.obdCap and self.obdCap.is_connected():
+            return self.obdCap.capture_data()
         return ""
 
     def get_port(self):
-        return self.c.is_connected()
+        return self.obdCap.is_connected()
 
     def get_port_name(self):
-        if self.c:
-            port = self.c.is_connected()
+        if self.obdCap:
+            port = self.obdCap.is_connected()
             if port:
                 try:
                     return port.port.name
@@ -66,13 +65,13 @@ class OBDConnection(object):
     
     def get_sensors(self):
         sensors = []
-        if self.c:
-            sensors = self.c.getSupportedSensorList()
+        if self.obdCap:
+            sensors = self.obdCap.getSupportedSensorList()
         return sensors
 
 #-------------------------------------------------------------------------------
 
-class OBDText(wx.TextCtrl):
+class OBDLoadingTextbox(wx.TextCtrl):
     """
     Text display while loading OBD application.
     """
@@ -321,21 +320,12 @@ class OBDLoadingPanel(wx.Panel):
         """
         super(OBDLoadingPanel, self).__init__(*args, **kwargs)
 
-        # Background image
-        image = wx.Image(BACKGROUND_FILENAME) 
+        # "Loading Background" image
+        image = wx.Image(LOADING_BG_FILENAME) 
         width, height = wx.GetDisplaySize() 
         image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
         self.bitmap = wx.BitmapFromImage(image) 
         self.Bind(wx.EVT_PAINT, self.OnPaint)
-
-        # Logo
-        bitmap = wx.Bitmap(LOGO_FILENAME)
-        width, height = bitmap.GetSize()
-        image = wx.ImageFromBitmap(bitmap)
-        image = image.Scale(width/12, height/12, wx.IMAGE_QUALITY_HIGH)
-        bitmap = wx.BitmapFromImage(image)
-        control = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
-        control.SetPosition((2, 2)) 
 
         # Create an accelerator table
         cid = wx.NewId()
@@ -346,7 +336,7 @@ class OBDLoadingPanel(wx.Panel):
         self.SetAcceleratorTable(self.accel_tbl)
 
         # Connection
-        self.c = None
+        self.obdCap = None
 
         # Sensors list
         self.sensors = []
@@ -355,14 +345,14 @@ class OBDLoadingPanel(wx.Panel):
         self.port = None
 
     def getConnection(self):
-        return self.c
+        return self.obdCap
 
     def showLoadingScreen(self):
         """
         Display the loading screen.
         """
         boxSizer = wx.BoxSizer(wx.VERTICAL)
-        self.textCtrl = OBDText(self)
+        self.textCtrl = OBDLoadingTextbox(self)
         boxSizer.Add(self.textCtrl, 1, wx.EXPAND | wx.ALL, 40)
         self.SetSizer(boxSizer)
         font3 = wx.Font(10, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
@@ -372,7 +362,7 @@ class OBDLoadingPanel(wx.Panel):
         
         self.timer0 = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.connect, self.timer0)
-        self.timer0.Start(1000)
+        self.timer0.Start(333)
 
 
     def connect(self, event):
@@ -380,11 +370,11 @@ class OBDLoadingPanel(wx.Panel):
             self.timer0.Stop()
 
         # Connection
-        self.c = OBDConnection()
-        self.c.connect()
+        self.obdCap = OBDConnection()
+        self.obdCap.connect()
         connected = False
         while not connected:
-            connected = self.c.is_connected()
+            connected = self.obdCap.is_connected()
             self.textCtrl.Clear()
             self.textCtrl.AddText(" Trying to connect ..." + time.asctime())
             if connected: 
@@ -396,13 +386,13 @@ class OBDLoadingPanel(wx.Panel):
         else:
             self.textCtrl.Clear()
             #self.textCtrl.AddText(" Connected\n")
-            port_name = self.c.get_port_name()
+            port_name = self.obdCap.get_port_name()
             if port_name:
                 self.textCtrl.AddText(" Failed Connection: " + port_name +"\n")
                 self.textCtrl.AddText(" Please hold alt & esc to view terminal.")
-            self.textCtrl.AddText(str(self.c.get_output()))
-            self.sensors = self.c.get_sensors()
-            self.port = self.c.get_port()
+            self.textCtrl.AddText(str(self.obdCap.get_output()))
+            self.sensors = self.obdCap.get_sensors()
+            self.port = self.obdCap.get_port()
 
             self.GetParent().update(None)
 
@@ -476,74 +466,6 @@ class OBDFrame(wx.Frame):
 
     def Paint(self, dc): 
         dc.DrawBitmap(self.bitmap, 0, 0)     
-        
-#-------------------------------------------------------------------------------
-
-class OBDFrame0(wx.Frame):
-    """
-    OBD starting frame. Used only for full screen purpose at startup.
-    """
-
-    def __init__(self):
-        """
-        Constructor.
-        """
-        wx.Frame.__init__(self, None, wx.ID_ANY, "")
-
-        image = wx.Image(BACKGROUND_FILENAME) 
-        width, height = wx.GetDisplaySize() 
-        image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
-        self.bitmap = wx.BitmapFromImage(image) 
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
-
-    def OnPaint(self, event): 
-        self.Paint(wx.PaintDC(self)) 
-
-    def Paint(self, dc): 
-        dc.DrawBitmap(self.bitmap, 0, 0)     
-
-#-------------------------------------------------------------------------------
-
-class OBDSplashScreen(wx.SplashScreen):
-    """
-    Splash screen.
-    """
-
-    def __init__(self, parent=None, frame0=None):
-        """
-        Constructor.
-        """
-        self.frame0 = frame0
-
-        image = wx.Image(SPLASHSCREEN_FILENAME)
-        width, height = wx.GetDisplaySize() 
-        image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
-        bitmap = wx.BitmapFromImage(image) 
-        
-        splashStyle = wx.SPLASH_CENTRE_ON_SCREEN | wx.SPLASH_TIMEOUT
-        splashDuration = SPLASHSCREEN_TIMEOUT
-        wx.SplashScreen.__init__(self, bitmap, splashStyle, splashDuration, parent)
-
-        self.Bind(wx.EVT_CLOSE, self.OnExit)
-        wx.Yield()
-
-    def OnExit(self, evt):
-        """
-        Exit splash screen and pass over other to main OBD frame.
-        """
-        
-        # Main frame                                           
-        frame = OBDFrame()
-        app.SetTopWindow(frame)
-        frame.ShowFullScreen(True)
-        frame.Show(True)
-
-        # Delete frame0
-        if self.frame0:
-            self.frame0.Destroy()
-            del self.frame0 
-        
-        evt.Skip()          
 
 #-------------------------------------------------------------------------------
 
@@ -567,22 +489,6 @@ class OBDApp(wx.App):
         self.SetTopWindow(frame)
         frame.ShowFullScreen(True)
         frame.Show(True)
-        #frame.showLoadingPanel()
-
-        # This frame is used only to set the full screen mode  
-        # for the splash screen display and for transition with 
-        # the loading screen.
-        # This frame is not shown and will be deleted later on.
-        #frame0 = OBDFrame0()
-        #self.SetTopWindow(frame0)
-        #frame0.ShowFullScreen(True)
-        #self.SetTopWindow(frame0)
-
-        # Splash screen
-        #splash = OBDSplashScreen(frame0, frame0)
-        #self.SetTopWindow(splash)
-        #splash.Show(True)
-        #splash.ShowFullScreen(True)
 
         return True
 
