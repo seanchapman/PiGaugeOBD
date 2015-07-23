@@ -308,7 +308,7 @@ class OBDLoadingPanel(wx.Panel):
         """
 		
 		# Setup loading output text box
-        self.textCtrl = wx.TextCtrl(self, pos=(200, 20), size=(100,200), style=wx.TE_READONLY | wx.TE_MULTILINE)
+        self.textCtrl = wx.TextCtrl(self, pos=(160, 20), size=(150,200), style=wx.TE_READONLY | wx.TE_MULTILINE)
         self.textCtrl.SetBackgroundColour('#21211f')
         self.textCtrl.SetForegroundColour(wx.WHITE)
         self.textCtrl.SetFont(wx.Font(10, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco"))
