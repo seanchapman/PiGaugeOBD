@@ -71,29 +71,6 @@ class OBDConnection(object):
 
 #-------------------------------------------------------------------------------
 
-class OBDLoadingTextbox(wx.TextCtrl):
-    """
-    Text display while loading OBD application.
-    """
-
-    def __init__(self, parent):
-        """
-        Constructor.
-        """
-        style = wx.TE_READONLY | wx.TE_MULTILINE
-        wx.TextCtrl.__init__(self, parent, style=style)
-
-        self.SetBackgroundColour('#21211f')
-        self.SetForegroundColour(wx.WHITE)  
-
-        font = wx.Font(12, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
-        self.SetFont(font)
-
-    def AddText(self, text):
-        self.AppendText(text)
-
-#-------------------------------------------------------------------------------
-
 class OBDStaticBox(wx.StaticBox):
     """
     OBD StaticBox.
@@ -329,14 +306,15 @@ class OBDLoadingPanel(wx.Panel):
         """
         Display the loading screen.
         """
-        boxSizer = wx.BoxSizer(wx.VERTICAL)
-        self.textCtrl = OBDLoadingTextbox(self)
-        boxSizer.Add(self.textCtrl, 1, wx.EXPAND | wx.ALL, 40)
-        self.SetSizer(boxSizer)
-        font3 = wx.Font(10, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
-        self.textCtrl.SetFont(font3)
-        self.textCtrl.AddText(" Opening interface (serial port)\n")     
-        self.textCtrl.AddText(" Trying to connect...\n")
+		
+		# Setup loading output text box
+        self.textCtrl = wx.TextCtrl(self, pos=(200, 20), size=(100,200), style=wx.TE_READONLY | wx.TE_MULTILINE)
+        self.textCtrl.SetBackgroundColour('#21211f')
+        self.textCtrl.SetForegroundColour(wx.WHITE)
+        self.textCtrl.SetFont(wx.Font(10, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco"))
+		
+        self.textCtrl.AppendText(" Opening interface (serial port)\n")     
+        self.textCtrl.AppendText(" Trying to connect...\n")
         
         self.timer0 = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.connect, self.timer0)
@@ -354,21 +332,21 @@ class OBDLoadingPanel(wx.Panel):
         while not connected:
             connected = self.obdCap.is_connected()
             self.textCtrl.Clear()
-            self.textCtrl.AddText(" Trying to connect ..." + time.asctime())
+            self.textCtrl.AppendText(" Trying to connect ..." + time.asctime())
             if connected: 
                 break
 
         if not connected:
-            self.textCtrl.AddText(" Not connected\n")
+            self.textCtrl.AppendText(" Not connected\n")
             return False
         else:
             self.textCtrl.Clear()
-            #self.textCtrl.AddText(" Connected\n")
+            #self.textCtrl.AppendText(" Connected\n")
             port_name = self.obdCap.get_port_name()
             if port_name:
-                self.textCtrl.AddText(" Failed Connection: " + port_name +"\n")
-                self.textCtrl.AddText(" Please hold alt & esc to view terminal.")
-            self.textCtrl.AddText(str(self.obdCap.get_output()))
+                self.textCtrl.AppendText(" Failed Connection: " + port_name +"\n")
+                self.textCtrl.AppendText(" Please hold alt & esc to view terminal.")
+            self.textCtrl.AppendText(str(self.obdCap.get_output()))
             self.sensors = self.obdCap.get_sensors()
             self.port = self.obdCap.get_port()
 
