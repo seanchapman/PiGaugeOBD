@@ -87,7 +87,7 @@ class OBDPanelGauges(wx.Panel):
         image = wx.Image(GAUGE_FILENAME) 
         width, height = wx.GetDisplaySize() 
         image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
-        self.bitmap = wx.BitmapFromImage(image) 
+        bitmap = wx.BitmapFromImage(image) 
         control = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
 
         # Handle events for touchscreen taps
@@ -291,7 +291,7 @@ class OBDLoadingPanel(wx.Panel):
         
         self.timer0 = wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.connect, self.timer0)
-        self.timer0.Start(500)
+        self.timer0.Start(1000)
 
 
     def connect(self, event):
@@ -307,8 +307,6 @@ class OBDLoadingPanel(wx.Panel):
             self.textCtrl.Clear()
             self.textCtrl.AppendText(" Trying to connect ..." + time.asctime())
             time.sleep(1)
-            if connected: 
-                break
 
         # Connected, get list of available sensors
         self.textCtrl.Clear()
