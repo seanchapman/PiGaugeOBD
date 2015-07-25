@@ -90,9 +90,9 @@ class OBDPanelGauges(wx.Panel):
         bitmap = wx.BitmapFromImage(image) 
         control = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
 
-        # Handle events for touchscreen taps
-        self.Bind(wx.EVT_LEFT_DOWN, self.onLeft)
-        self.Bind(wx.EVT_RIGHT_DOWN, self.onRight)
+        # Handle events for touchscreen taps on background bitmap
+        control.Bind(wx.EVT_LEFT_DOWN, self.onLeft)
+        control.Bind(wx.EVT_RIGHT_DOWN, self.onRight)
         
         # Initialise connection, sensors, port and list variables
         self.connection = None
@@ -154,7 +154,7 @@ class OBDPanelGauges(wx.Panel):
 
             # Text for sensor value 
             if type(value)==float:  
-                value = str("%.2f"%round(value, 3))                    
+                value = str("%.2f"%round(value, 3)) + str(unit)
             t1 = wx.StaticText(parent=self, label=str(value), style=wx.ALIGN_CENTER)
             t1.SetForegroundColour('WHITE')
             font1 = wx.Font(30, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
@@ -193,6 +193,7 @@ class OBDPanelGauges(wx.Panel):
         self.timer.Start(500)
 
 
+    # Refresh gets fresh data from the sensors
     def refresh(self, event):
         sensors = self.getSensorsToDisplay(self.istart)   
         
@@ -200,8 +201,9 @@ class OBDPanelGauges(wx.Panel):
         for index, sensor in sensors:
 
             (name, value, unit) = self.port.sensor(index)
-            if type(value)==float:  
-                value = str("%.2f"%round(value, 3)) + str(unit)                    
+            if type(value)==float:
+                value = str("%.2f"%round(value, 3)) + str(unit)
+                print value
 
             if itext<len(self.texts):
                 self.texts[itext*2].SetLabel(str(value))
