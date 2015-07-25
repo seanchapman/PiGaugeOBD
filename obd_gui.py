@@ -87,23 +87,17 @@ class OBDPanelGauges(wx.Panel):
         width, height = wx.GetDisplaySize() 
         image = image.Scale(width, height, wx.IMAGE_QUALITY_HIGH)
         self.bitmap = wx.BitmapFromImage(image) 
-        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        control = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
 
         # Handle events for touchscreen taps
         self.Bind(wx.EVT_LEFT_DOWN, self.onLeft)
         self.Bind(wx.EVT_RIGHT_DOWN, self.onRight)
         
-        # Connection
+        # Initialise connection, sensors, port and list variables
         self.connection = None
-
-        # Sensors 
         self.istart = 0
         self.sensors = []
-        
-        # Port 
         self.port = None
-
-        # List to hold children widgets
         self.boxes = []
         self.texts = []
 
@@ -206,7 +200,7 @@ class OBDPanelGauges(wx.Panel):
 
             (name, value, unit) = self.port.sensor(index)
             if type(value)==float:  
-                value = str("%.2f"%round(value, 3))                    
+                value = str("%.2f"%round(value, 3)) + str(unit)                    
 
             if itext<len(self.texts):
                 self.texts[itext*2].SetLabel(str(value))
@@ -219,7 +213,7 @@ class OBDPanelGauges(wx.Panel):
 
     def onLeft(self, event):
         """
-        Get data from 1 previous sensor in the list.
+        Get data from previous sensor in the list.
         """
         istart = self.istart + 1
         if istart<len(self.sensors):
@@ -232,7 +226,7 @@ class OBDPanelGauges(wx.Panel):
 				
     def onRight(self, event):
         """
-        Get data from 1 next sensor in the list.
+        Get data from next sensor in the list.
         """
         istart = self.istart + 1
         if istart<len(self.sensors):
@@ -241,13 +235,7 @@ class OBDPanelGauges(wx.Panel):
         else: 
 			istart = self.istart - 31 
 			self.istart = istart 
-			self.ShowSensors()
-
-    def OnPaint(self, event): 
-        self.Paint(wx.PaintDC(self)) 
-
-    def Paint(self, dc): 
-        dc.DrawBitmap(self.bitmap, 0, 0)     
+			self.ShowSensors()   
 
 #-------------------------------------------------------------------------------
 

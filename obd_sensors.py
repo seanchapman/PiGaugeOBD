@@ -150,7 +150,7 @@ class SensorLimits(Sensor):
 
 
 SENSORS = [
-    SensorLimits("temp", "Coolant Temp", "0105", tempCelcius, "C", 20, 20, 20, 20),
+    SensorLimits("temp", "Coolant Temp", "0105", tempCelcius, "C", 20, 140, 85, 100), #check me
     SensorLimits("speed", "Vehicle Speed", "010D1", speedMph, "MPH", 0, 160, 0, 160),
     Sensor("pids"                  , "Supported PIDs"				, "0100" , hex_to_bitstring ,""       ), 
     Sensor("dtc_status"            , "S-S DTC Cleared"				, "0101" , dtc_decrypt      ,""       ),    
