@@ -15,6 +15,7 @@ class OBD_Capture():
         self.port = None
         localtime = time.localtime(time.time())
 
+    # Connect to available Bluetooth/USB serial port, get ELM version, set CAN mode
     def connect(self):
         portnames = scanSerial()
         print portnames
@@ -36,23 +37,22 @@ class OBD_Capture():
         return self.supportedSensorList 
 
     def capture_data(self):
-
-        text = ""
-        #Find supported sensors - by getting PIDs from OBD
+        # Find supported sensors - by getting PIDs from OBD
         # its a string of binary 01010101010101 
         # 1 means the sensor is supported
-        self.supp = self.port.sensor(0)[1]
+        self.supportedPIDs = str(self.port.sensor(0)[1])
         self.supportedSensorList = []
         self.unsupportedSensorList = []
 
         # loop through PIDs binary
-        for i in range(0, len(self.supp)):
-            if self.supp[i] == "1":
+        for i in range(0, len(self.supportedPIDs)):
+            if self.supportedPIDs[i] == "1":
                 # store index of sensor and sensor object
                 self.supportedSensorList.append([i+1, obd_sensors.SENSORS[i+1]])
             else:
                 self.unsupportedSensorList.append([i+1, obd_sensors.SENSORS[i+1]])
         
+        text = ""
         for supportedSensor in self.supportedSensorList:
             text += "supported sensor index = " + str(supportedSensor[0]) + " " + str(supportedSensor[1].shortname) + "\n"
         
@@ -61,7 +61,7 @@ class OBD_Capture():
         if(self.port is None):
             return None
 
-        #Loop until Ctrl C is pressed        
+        # Loop until Ctrl C is pressed        
         localtime = datetime.now()
         current_time = str(localtime.hour)+":"+str(localtime.minute)+":"+str(localtime.second)+"."+str(localtime.microsecond)
         #log_string = current_time + "\n"
@@ -72,6 +72,7 @@ class OBD_Capture():
             (name, value, unit) = self.port.sensor(sensorIndex)
             text += name + " = " + str(value) + " " + str(unit) + "\n"
 
+        print text
         return text
 
 if __name__ == "__main__":

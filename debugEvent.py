@@ -27,9 +27,7 @@ try:
     EVT_DEBUG_ID = 1010
     
     def debug_display(window, position, message):
-        if window is None:
             print message
-        else:
             wx.PostEvent(window, DebugEvent([position, message]))
        
     class DebugEvent(wx.PyEvent):

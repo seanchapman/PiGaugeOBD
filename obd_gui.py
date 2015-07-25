@@ -24,8 +24,8 @@ LOADING_BG_FILENAME	= "loading_bg.png"
 
 #-------------------------------------------------------------------------------
 
-def obd_connect(o):
-    o.connect()
+def obd_connect(obdCap):
+    obdCap.connect()
 
 class OBDConnection(object):
     """
@@ -37,7 +37,8 @@ class OBDConnection(object):
 
     def get_capture(self):
         return self.obdCap
-
+    
+    # Start a thread to connect to available BT/USB serial port
     def connect(self):
         self.t = Thread(target=obd_connect, args=(self.obdCap,))
         self.t.start()
@@ -263,7 +264,7 @@ class OBDLoadingPanel(wx.Panel):
         control = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
 
         # Connection
-        self.obdCap = None
+        self.obdConn = None
 
         # Sensors list
         self.sensors = []
@@ -272,7 +273,7 @@ class OBDLoadingPanel(wx.Panel):
         self.port = None
 
     def getConnection(self):
-        return self.obdCap
+        return self.obdConn
 
     def showLoadingScreen(self):
         """
@@ -297,32 +298,29 @@ class OBDLoadingPanel(wx.Panel):
         if self.timer0:
             self.timer0.Stop()
 
-        # Connection
-        self.obdCap = OBDConnection()
-        self.obdCap.connect()
+        # Connect to serial port, get ELM version, set CAN mode
+        self.obdConn = OBDConnection()
+        self.obdConn.connect()
         connected = False
         while not connected:
-            connected = self.obdCap.is_connected()
+            connected = self.obdConn.is_connected()
             self.textCtrl.Clear()
             self.textCtrl.AppendText(" Trying to connect ..." + time.asctime())
+            time.sleep(1)
             if connected: 
                 break
 
-        if not connected:
-            self.textCtrl.AppendText(" Not connected\n")
-            return False
-        else:
-            self.textCtrl.Clear()
-            self.textCtrl.AppendText(" Connected!\n")
-            port_name = self.obdCap.get_port_name()
-            if port_name:
-                self.textCtrl.AppendText(" Failed Connection: " + port_name +"\n")
-                self.textCtrl.AppendText(" Please hold alt & esc to view terminal.")
-            self.textCtrl.AppendText(str(self.obdCap.get_output()))
-            self.sensors = self.obdCap.get_sensors()
-            self.port = self.obdCap.get_port()
+        # Connected, get list of available sensors
+        self.textCtrl.Clear()
+        port_name = self.obdConn.get_port_name()
+        if port_name:
+            self.textCtrl.AppendText(" Connected on port " + port_name + "\n")
+        self.textCtrl.AppendText(" Error? Hold ALT & ESC to view terminal.")
+        self.textCtrl.AppendText(str(self.obdConn.get_output()))
+        self.sensors = self.obdConn.get_sensors()
+        self.port = self.obdConn.get_port()
 
-            self.GetParent().update(None)
+        self.GetParent().update(None)
 
 
     def getSensors(self):

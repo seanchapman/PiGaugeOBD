@@ -231,8 +231,8 @@ class OBDPort:
          """Returns 3-tuple of given sensors. 3-tuple consists of
          (Sensor Name (string), Sensor Value (string), Sensor Unit (string) ) """
          sensor = obd_sensors.SENSORS[sensor_index]
-         r = self.get_sensor_value(sensor)
-         return (sensor.name,r, sensor.unit)
+         value = self.get_sensor_value(sensor)
+         return (sensor.name, value, sensor.unit)
 
      def sensor_names(self):
          """Internal use only: not a public interface"""
