@@ -233,9 +233,12 @@ class OBDPanelGauges(wx.Panel):
             self.istart = istart
             self.ShowSensors()
         else: 
-			istart = self.istart - 31 
-			self.istart = istart 
-			self.ShowSensors()   
+			istart = self.istart - 31
+			self.istart = istart
+			self.ShowSensors()
+            
+    def OnPaint(self, event):
+        self.Paint(wx.PaintDC(self))
 
 #-------------------------------------------------------------------------------
 
