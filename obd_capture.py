@@ -40,7 +40,9 @@ class OBD_Capture():
         # Find supported sensors - by getting PIDs from OBD
         # its a string of binary 01010101010101 
         # 1 means the sensor is supported
-        self.supportedPIDs = str(self.port.sensor(0)[1])
+        self.port.updateSensor(0) # PIDs
+        self.supportedPIDs = str(self.port.getSensorTuple(0)[1])
+        print "Supported PIDs: " + str(self.supportedPIDs)
         self.supportedSensorList = []
         self.unsupportedSensorList = []
 
@@ -69,9 +71,11 @@ class OBD_Capture():
         results = {}
         for supportedSensor in self.supportedSensorList:
             sensorIndex = supportedSensor[0]
-            (name, value, unit) = self.port.sensor(sensorIndex)
+            self.port.updateSensor(sensorIndex)
+            (name, value, unit) = self.port.getSensorTuple(sensorIndex)
             text += name + " = " + str(value) + " " + str(unit) + "\n"
 
+        print "Initial sensor values:"
         print text
         return text
 

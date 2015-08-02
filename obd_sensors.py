@@ -129,20 +129,39 @@ def hex_to_bitstring(str):
     return bitstring
 
 # Sensor class used for data values with units
+# bEnabled sets wether the sensor should be shown or not
 class Sensor:
-    def __init__(self, shortName, sensorName, sensorcommand, sensorValueFunc, strUnit):
+    def __init__(self, shortName, sensorName, sensorCommand, valueParserFunc, strUnit, bEnabled):
         self.shortname = shortName
         self.name = sensorName
-        self.cmd = sensorcommand
-        self.value = sensorValueFunc
+        self.cmd = sensorCommand
+        self.value = 0.0
+        self.valueParserFunc = valueParserFunc
         self.unit = strUnit
+        self.enabled = bEnabled
+        
+    # Update the sensor value
+    def update(self, newVal):
+        self.value = self.valueParserFunc(newVal)
+        
+    def getFormattedValue(self):
+        # Round decimal places
+        if type(self.value)==float:
+            formatted = str("%.2f"%round(self.value, 3))
+        else:
+            formatted = str(self.value)
+        
+        # Add unit text
+        formatted = formatted + str(self.unit)
+        
+        return formatted
         
 # Adapter sensor class used for data values with units, but also min/max values and lower and upper safe limits
 # The safe lower limit is the lower bound for a safe value (e.g. the lowest standard operating temperature)
 # The safe upper limit is the higher bound for a safe value (e.g. the highest standard operating temperature. If it rises above this, there is a problem)
 class SensorLimits(Sensor):
-    def __init__(self, shortName, sensorName, sensorCmd, sensorValueFunc, strUnit, min, max, lowerSafeLimit, upperSafeLimit):
-        Sensor.__init__(self, shortName, sensorName, sensorCmd, sensorValueFunc, strUnit)
+    def __init__(self, shortName, sensorName, sensorCmd, valueParserFunc, strUnit, min, max, lowerSafeLimit, upperSafeLimit, bEnabled):
+        Sensor.__init__(self, shortName, sensorName, sensorCmd, valueParserFunc, strUnit, bEnabled)
         self.min = min
         self.max = max
         self.lowerSafeLimit = lowerSafeLimit
@@ -151,39 +170,40 @@ class SensorLimits(Sensor):
 
 # NOTE: The ordering of this array is important
 SENSORS = [
-    Sensor("pids"                  , "Supported PIDs"				, "0100" , hex_to_bitstring ,""       ), 
-    Sensor("dtc_status"            , "S-S DTC Cleared"				, "0101" , dtc_decrypt      ,""       ),    
-    Sensor("dtc_ff"                , "DTC C-F-F"					, "0102" , cpass            ,""       ),      
-    Sensor("fuel_status"           , "Fuel System Stat"				, "0103" , cpass            ,""       ),
-    Sensor("load"                  , "Calc Load Value"				, "01041", percent_scale    ,""       ),    
-    SensorLimits("temp", "Coolant Temp", "0105", tempCelcius, "C", 20, 140, 85, 100), # check these limits (90C seems to be usual operating temp)
-    Sensor("short_term_fuel_trim_1", "S-T Fuel Trim"				, "0106" , fuel_trim_percent,"%"      ),
-    Sensor("long_term_fuel_trim_1" , "L-T Fuel Trim"				, "0107" , fuel_trim_percent,"%"      ),
-    Sensor("short_term_fuel_trim_2", "S-T Fuel Trim"				, "0108" , fuel_trim_percent,"%"      ),
-    Sensor("long_term_fuel_trim_2" , "L-T Fuel Trim"				, "0109" , fuel_trim_percent,"%"      ),
-    Sensor("fuel_pressure"         , "FuelRail Pressure"			, "010A" , cpass            ,""       ),
-    Sensor("manifold_pressure"     , "Intk Manifold"				, "010B" , intake_m_pres    ,"psi"    ),
-    Sensor("rpm"                   , "Engine RPM"					, "010C1", rpm              ,""       ),
-    SensorLimits("speed", "Vehicle Speed", "010D1", speedMph, "MPH", 0, 160, 0, 160),
-    Sensor("timing_advance"        , "Timing Advance"				, "010E" , timing_advance   ,"degrees"),
-    Sensor("intake_air_temp"       , "Intake Air Temp"				, "010F" , tempCelcius      ,"C"      ),
-    Sensor("maf"                   , "AirFlow Rate(MAF)"			, "0110" , maf              ,"lb/min" ),
-    Sensor("throttle_pos"          , "Throttle Position"			, "01111", throttle_pos     ,"%"      ),
-    Sensor("secondary_air_status"  , "2nd Air Status"				, "0112" , cpass            ,""       ),
-    Sensor("o2_sensor_positions"   , "Loc of O2 sensors"			, "0113" , cpass            ,""       ),
-    Sensor("o211"                  , "O2 Sensor: 1 - 1"				, "0114" , fuel_trim_percent,"%"      ),
-    Sensor("o212"                  , "O2 Sensor: 1 - 2"				, "0115" , fuel_trim_percent,"%"      ),
-    Sensor("o213"                  , "O2 Sensor: 1 - 3"				, "0116" , fuel_trim_percent,"%"      ),
-    Sensor("o214"                  , "O2 Sensor: 1 - 4"				, "0117" , fuel_trim_percent,"%"      ),
-    Sensor("o221"                  , "O2 Sensor: 2 - 1"				, "0118" , fuel_trim_percent,"%"      ),
-    Sensor("o222"                  , "O2 Sensor: 2 - 2"				, "0119" , fuel_trim_percent,"%"      ),
-    Sensor("o223"                  , "O2 Sensor: 2 - 3"				, "011A" , fuel_trim_percent,"%"      ),
-    Sensor("o224"                  , "O2 Sensor: 2 - 4"				, "011B" , fuel_trim_percent,"%"      ),
-    Sensor("obd_standard"          , "OBD Designation"				, "011C" , cpass            ,""       ),
-    Sensor("o2_sensor_position_b"  , "Loc of O2 sensor" 			, "011D" , cpass            ,""       ),
-    Sensor("aux_input"             , "Aux input status"				, "011E" , cpass            ,""       ),
-    Sensor("engine_time"           , "Engine Start MIN"				, "011F" , sec_to_min       ,"min"    ),
-    Sensor("engine_mil_time"       , "Engine Run MIL"				, "014D" , sec_to_min       ,"min"    ),
+    #       CODE                        NAME                    PID                                         ENABLED
+    Sensor("pids",                      "Supported PIDs",       "0100", hex_to_bitstring, "",               True), 
+    Sensor("dtc_status",                "S-S DTC Cleared",      "0101", dtc_decrypt, "",                    False),    
+    Sensor("dtc_ff",                    "DTC C-F-F",            "0102", cpass, "",                          False),      
+    Sensor("fuel_status",               "Fuel System Stat",     "0103", cpass, "",                          False),
+    Sensor("load",                      "Calc Load Value",      "01041", percent_scale, "",                 True),    
+    SensorLimits("temp",                "Coolant Temp",         "0105", tempCelcius, "C", 20, 140, 88, 95,  True), # 90C is optimal temp
+    Sensor("short_term_fuel_trim_1",    "S-T Fuel Trim",        "0106", fuel_trim_percent, "%",             False),
+    Sensor("long_term_fuel_trim_1",     "L-T Fuel Trim",        "0107", fuel_trim_percent, "%",             False),
+    Sensor("short_term_fuel_trim_2",    "S-T Fuel Trim",        "0108", fuel_trim_percent, "%",             False),
+    Sensor("long_term_fuel_trim_2",     "L-T Fuel Trim",        "0109", fuel_trim_percent, "%",             False),
+    Sensor("fuel_pressure",             "FuelRail Pressure",    "010A", cpass, "",                          False),
+    Sensor("manifold_pressure",         "Intk Manifold",        "010B", intake_m_pres, "psi",               True),
+    Sensor("rpm",                       "Engine RPM",           "010C1", rpm, "",                           True),
+    SensorLimits("speed",               "Vehicle Speed",        "010D1", speedMph, "MPH", 0, 160, 0, 160,   True),
+    Sensor("timing_advance",            "Timing Advance",       "010E", timing_advance, "degrees",          False),
+    Sensor("intake_air_temp",           "Intake Air Temp",      "010F", tempCelcius, "C",                   False),
+    Sensor("maf",                       "AirFlow Rate(MAF)",    "0110", maf, "lb/min",                      True),
+    Sensor("throttle_pos",              "Throttle Position",    "01111", throttle_pos, "%",                 False),
+    Sensor("secondary_air_status",      "2nd Air Status",       "0112", cpass, "",                          False),
+    Sensor("o2_sensor_positions",       "Loc of O2 sensors",    "0113", cpass, "",                          False),
+    Sensor("o211",                      "O2 Sensor: 1 - 1",     "0114", fuel_trim_percent, "%",             False),
+    Sensor("o212",                      "O2 Sensor: 1 - 2",     "0115", fuel_trim_percent, "%",             False),
+    Sensor("o213",                      "O2 Sensor: 1 - 3",     "0116", fuel_trim_percent, "%",             False),
+    Sensor("o214",                      "O2 Sensor: 1 - 4",     "0117", fuel_trim_percent, "%",             False),
+    Sensor("o221",                      "O2 Sensor: 2 - 1",     "0118", fuel_trim_percent, "%",             False),
+    Sensor("o222",                      "O2 Sensor: 2 - 2",     "0119", fuel_trim_percent, "%",             False),
+    Sensor("o223",                      "O2 Sensor: 2 - 3",     "011A", fuel_trim_percent, "%",             False),
+    Sensor("o224",                      "O2 Sensor: 2 - 4",     "011B", fuel_trim_percent, "%",             False),
+    Sensor("obd_standard",              "OBD Designation",      "011C", cpass, "",                          False),
+    Sensor("o2_sensor_position_b",      "Loc of O2 sensor",     "011D", cpass, "",                          False),
+    Sensor("aux_input",                 "Aux input status",     "011E", cpass, "",                          False),
+    Sensor("engine_time",               "Engine Start MIN",     "011F", sec_to_min, "min",                  True),
+    Sensor("engine_mil_time",           "Engine Run MIL",       "014D", sec_to_min, "min",                  False),
     ]
      
     

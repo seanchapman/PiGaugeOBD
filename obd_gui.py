@@ -146,16 +146,15 @@ class OBDPanelGauges(wx.Panel):
         # Create a box for each sensor
         for index, sensor in sensors:
             
-            (name, value, unit) = self.port.sensor(index)
+            self.port.updateSensor(index)
+            (name, value, unit) = self.port.getSensorTuple(index)
 
             box = wx.StaticBox(self, wx.ID_ANY)
             self.boxes.append(box)
             boxSizer = wx.StaticBoxSizer(box, wx.VERTICAL)
-
-            # Text for sensor value 
-            if type(value)==float:  
-                value = str("%.2f"%round(value, 3)) + str(unit)
-            t1 = wx.StaticText(parent=self, label=str(value), style=wx.ALIGN_CENTER)
+                
+            formatted = self.port.getSensorFormatted(index)
+            t1 = wx.StaticText(parent=self, label=formatted, style=wx.ALIGN_CENTER)
             t1.SetForegroundColour('WHITE')
             font1 = wx.Font(30, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
             t1.SetFont(font1)
@@ -193,20 +192,18 @@ class OBDPanelGauges(wx.Panel):
         self.timer.Start(500)
 
 
-    # Refresh gets fresh data from the sensors
+    # Update gets fresh data from the sensors
     def refresh(self, event):
         sensors = self.getSensorsToDisplay(self.istart)   
         
         itext = 0
         for index, sensor in sensors:
 
-            (name, value, unit) = self.port.sensor(index)
-            if type(value)==float:
-                value = str("%.2f"%round(value, 3)) + str(unit)
-                print value
+            self.port.updateSensor(index)
+            formattedValue = self.port.getSensorFormatted(index)
 
             if itext<len(self.texts):
-                self.texts[itext*2].SetLabel(str(value))
+                self.texts[itext*2].SetLabel(formattedValue)
             
             itext += 1
 

@@ -211,8 +211,10 @@ class OBDPort:
          return None
 
      # get sensor value from command
-     def get_sensor_value(self,sensor):
-         """Internal use only: not a public interface"""
+     def updateSensor(self, sensor_index):
+         """Gets the latest value from OBD and updates it"""
+         sensor = obd_sensors.SENSORS[sensor_index]
+         print "Sensor value before update: " + str(sensor.value)
          cmd = sensor.cmd
          self.send_command(cmd)
          data = self.get_result()
@@ -220,20 +222,24 @@ class OBDPort:
          if data:
              data = self.interpret_result(data)
              if data != "NODATA":
-                 data = sensor.value(data)
+                 sensor.update(data)
          else:
-             return "NORESPONSE"
-             
-         return data
+             sensor.value = "NORESPONSE"
+         
+         print "Sensor value after update: " + str(sensor.value)
 
-     # return string of sensor name and value from sensor index
-     def sensor(self , sensor_index):
+     # Get string of sensor name, raw value and unit from index
+     def getSensorTuple(self, sensor_index):
          """Returns 3-tuple of given sensors. 3-tuple consists of
          (Sensor Name (string), Sensor Value (string), Sensor Unit (string) ) """
          sensor = obd_sensors.SENSORS[sensor_index]
-         value = self.get_sensor_value(sensor)
-         return (sensor.name, value, sensor.unit)
-
+         return (sensor.name, sensor.value, sensor.unit)
+         
+     # Get string of formatted sensor value from index
+     def getSensorFormatted(self, sensor_index):
+        sensor = obd_sensors.SENSORS[sensor_index]
+        return sensor.getFormattedValue()
+     
      def sensor_names(self):
          """Internal use only: not a public interface"""
          names = []
@@ -244,7 +250,10 @@ class OBDPort:
      def get_tests_MIL(self):
          statusText=["Unsupported","Supported - Completed","Unsupported","Supported - Incompleted"]
          
-         statusRes = self.sensor(1)[1] #GET values
+         # Get latest sensor values
+         self.updateSensor(1)
+         statusRes = self.getSensorTuple(1)[1]
+         
          statusTrans = [] #translate values to text
          
          statusTrans.append(str(statusRes[0])) #DTCs
@@ -267,7 +276,11 @@ class OBDPort:
           """Returns a list of all pending DTC codes. Each element consists of
           a 2-tuple: (DTC code (string), Code description (string) )"""
           dtcLetters = ["P", "C", "B", "U"]
-          r = self.sensor(1)[1] #data
+          
+          # Get DTC data
+          self.updateSensor(1)
+          r = self.getSensorTuple(1)[1] #data
+          
           dtcNumber = r[0]
           mil = r[1]
           DTCCodes = []
@@ -322,12 +335,14 @@ class OBDPort:
           file = open(filename, "w")
           start_time = time.time() 
           if file:
-               data = self.sensor(sensor_index)
+               self.updateSensor(sensor_index)
+               data = self.getSensorTuple(sensor_index)
                file.write("%s     \t%s(%s)\n" % \
                          ("Time", string.strip(data[0]), data[2])) 
                while 1:
                     now = time.time()
-                    data = self.sensor(sensor_index)
+                    self.updateSensor(sensor_index)
+                    data = self.getSensorTuple(sensor_index)
                     line = "%.6f,\t%s\n" % (now - start_time, data[1])
                     file.write(line)
                     file.flush()
