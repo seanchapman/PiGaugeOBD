@@ -91,43 +91,23 @@ class OBDPanelGauges(wx.Panel):
         control = wx.StaticBitmap(self, wx.ID_ANY, bitmap)
 
         # Handle events for touchscreen taps on background bitmap
-        control.Bind(wx.EVT_LEFT_DOWN, self.onLeft)
-        control.Bind(wx.EVT_RIGHT_DOWN, self.onRight)
+        control.Bind(wx.EVT_LEFT_DOWN, self.onLeftClick)
+        control.Bind(wx.EVT_RIGHT_DOWN, self.onRightClick)
         
         # Initialise connection, sensors, port and list variables
         self.connection = None
-        self.istart = 0
-        self.sensors = []
+        self.currSensorIndex = 0
+        self.sensors = []  # Note: This is populated with the enabled sensors by OBDFrame before it calls createGaugeGui
         self.port = None
         self.boxes = []
         self.texts = []
-
-
-    def setConnection(self, connection):
-        self.connection = connection
-    
-    def setSensors(self, sensors):
-        self.sensors = sensors
         
-    def setPort(self, port):
-        self.port = port
-
-    def getSensorsToDisplay(self, istart):
-        """
-        Get at most 1 sensor to be displayed on screen.
-        """
-        sensors_display = []
-        if istart<len(self.sensors):
-            iend = istart + 1
-            sensors_display = self.sensors[istart:iend]
-        return sensors_display
-
-    def ShowSensors(self):
+        
+    # Create the GUI for the gauges
+    def createGaugeGui(self):
         """
         Display the sensors.
         """
-        
-        sensors = self.getSensorsToDisplay(self.istart)
 
         # Destroy previous widgets
         for b in self.boxes: b.Destroy()
@@ -143,99 +123,88 @@ class OBDPanelGauges(wx.Panel):
         vgap, hgap = 50, 50
         gridSizer = wx.GridSizer(nrows, ncols, vgap, hgap)
 
-        # Create a box for each sensor
-        for index, sensor in sensors:
+        # Create a box for currently selected sensor
+        box = wx.StaticBox(self, wx.ID_ANY)
+        self.boxes.append(box)
+        boxSizer = wx.StaticBoxSizer(box, wx.VERTICAL)
             
-            self.port.updateSensor(index)
-            (name, value, unit) = self.port.getSensorTuple(index)
+        # Fetch latest sensor values
+        sensor = self.sensors[currSensorIndex]
+        self.port.updateSensor(currSensorIndex)
+        formatted = self.port.getSensorFormatted(index)
+        
+        # Create text for sensor value
+        t1 = wx.StaticText(parent=self, label=formatted, style=wx.ALIGN_CENTER)
+        t1.SetForegroundColour('WHITE')
+        font1 = wx.Font(30, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
+        t1.SetFont(font1)
+        boxSizer.Add(t1, 0, wx.ALIGN_CENTER | wx.ALL, 70)
+        boxSizer.AddStretchSpacer()
+        self.texts.append(t1)
 
-            box = wx.StaticBox(self, wx.ID_ANY)
-            self.boxes.append(box)
-            boxSizer = wx.StaticBoxSizer(box, wx.VERTICAL)
-                
-            formatted = self.port.getSensorFormatted(index)
-            t1 = wx.StaticText(parent=self, label=formatted, style=wx.ALIGN_CENTER)
-            t1.SetForegroundColour('WHITE')
-            font1 = wx.Font(30, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
-            t1.SetFont(font1)
-            boxSizer.Add(t1, 0, wx.ALIGN_CENTER | wx.ALL, 70)
-            boxSizer.AddStretchSpacer()
-            self.texts.append(t1)
-
-            # Text for sensor name
-            t2 = wx.StaticText(parent=self, label=name, style=wx.ALIGN_CENTER)
-            t2.SetForegroundColour('WHITE')
-            font2 = wx.Font(10, wx.ROMAN, wx.NORMAL, wx.BOLD, faceName="Monaco")
-            t2.SetFont(font2)
-            boxSizer.Add(t2, 0, wx.ALIGN_CENTER | wx.ALL, 45)
-            self.texts.append(t2)
-            gridSizer.Add(boxSizer, 1, wx.EXPAND | wx.ALL)
-
-        # Add invisible boxes if necessary
-        nsensors = len(sensors)
-        for i in range(1-nsensors):
-            box = wx.StaticBox(self)
-            boxSizer = wx.StaticBoxSizer(box, wx.VERTICAL)
-            self.boxes.append(box)
-            box.Show(False)
-            gridSizer.Add(boxSizer, 1, wx.EXPAND | wx.ALL)
+        # Create Text for sensor name
+        t2 = wx.StaticText(parent=self, label=sensor.name, style=wx.ALIGN_CENTER)
+        t2.SetForegroundColour('WHITE')
+        font2 = wx.Font(10, wx.ROMAN, wx.NORMAL, wx.BOLD, faceName="Monaco")
+        t2.SetFont(font2)
+        boxSizer.Add(t2, 0, wx.ALIGN_CENTER | wx.ALL, 45)
+        self.texts.append(t2)
+        gridSizer.Add(boxSizer, 1, wx.EXPAND | wx.ALL)
            
         # Layout
         boxSizerMain.Add(gridSizer, 1, wx.EXPAND | wx.ALL, 0)
         self.SetSizer(boxSizerMain)
-        self.Refresh()
+        self.update()
         self.Layout() 
 
         # Timer for update
         self.timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.refresh, self.timer)
+        self.Bind(wx.EVT_TIMER, self.update, self.timer)
         self.timer.Start(500)
 
 
     # Update gets fresh data from the sensors
-    def refresh(self, event):
-        sensors = self.getSensorsToDisplay(self.istart)   
-        
-        itext = 0
-        for index, sensor in sensors:
-
+    def update(self, event):
+        i = 0
+        for sensor in self.sensors:
             self.port.updateSensor(index)
-            formattedValue = self.port.getSensorFormatted(index)
-
-            if itext<len(self.texts):
-                self.texts[itext*2].SetLabel(formattedValue)
             
-            itext += 1
+            if i == self.currSensorIndex:
+                # Update text on GUI
+                formattedValue = self.port.getSensorFormatted(index)
+                if i < len(self.texts):
+                    self.texts[i*2].SetLabel(formattedValue)
+            
+            i += 1
 
 
     def onCtrlC(self, event):
         self.GetParent().Close()
 
-    def onLeft(self, event):
+        
+    def onLeftClick(self, event):
         """
-        Get data from previous sensor in the list.
+        Go to the next screen
         """
-        istart = self.istart + 1
-        if istart<len(self.sensors):
-            self.istart = istart
-            self.ShowSensors()
-        else: 
-			istart = self.istart - 31 
-			self.istart = istart 
-			self.ShowSensors() 
+        self.currSensorIndex += 1
+        if self.currSensorIndex >= len(self.sensors):
+            self.currSensorIndex = 0
+            
+            # Update GUI
+            self.createGaugeGui()
 				
-    def onRight(self, event):
+                
+    def onRightClick(self, event):
         """
-        Get data from next sensor in the list.
+        Go to the previous screen
         """
-        istart = self.istart + 1
-        if istart<len(self.sensors):
-            self.istart = istart
-            self.ShowSensors()
-        else: 
-			istart = self.istart - 31
-			self.istart = istart
-			self.ShowSensors()
+        self.currSensorIndex -= 1
+        if self.currSensorIndex < 0:
+            self.currSensorIndex = len(self.sensors) - 1
+            
+            # Update GUI
+            self.createGaugeGui()
+            
             
     def OnPaint(self, event):
         self.Paint(wx.PaintDC(self))
@@ -363,15 +332,22 @@ class OBDFrame(wx.Frame):
         self.panelGauges = OBDPanelGauges(self)
         
         if connection:
-            self.panelGauges.setConnection(connection)
+            self.panelGauges.connection = connection
 
         if sensors:
-            self.panelGauges.setSensors(sensors)
-            self.panelGauges.setPort(port)
+            # Get only the enabled sensors and set them in the main gauge GUI
+            enabledSensors = []
+            for sensor in sensors:
+                if sensor.enabled == True:
+                    enabledSensors.append(sensor)
+        
+            self.panelGauges.sensors = enabledSensors
+            self.panelGauges.port = port
+            
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.panelGauges, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
-        self.panelGauges.ShowSensors()
+        self.panelGauges.createGaugeGui()
         self.panelGauges.SetFocus()
         self.Layout()
 
