@@ -182,6 +182,7 @@ class OBDPanelGauges(wx.Panel):
                 self.texts[1].SetLabel(sensor.name)
                 
                 # Colour text based on sensor limits
+                print type(sensor)
                 if type(sensor) is SensorLimits:
                     # Is sensor value within safe limit?
                     if sensor.value >= sensor.lowerSafeLimit and sensor.value <= sensor.upperSafeLimit:
