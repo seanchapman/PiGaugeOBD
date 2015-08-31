@@ -176,14 +176,14 @@ SENSORS = [
     Sensor("dtc_ff",                    "DTC C-F-F",            "0102", cpass, "",                          False),      
     Sensor("fuel_status",               "Fuel System Stat",     "0103", cpass, "",                          False),
     Sensor("load",                      "Calc Load Value",      "01041", percent_scale, "",                 True),    
-    SensorLimits("temp",                "Coolant Temp",         "0105", tempCelcius, "C", 0, 140, 50, 99,  True), # 90C is optimal temp (CHANGE MIN BACK TO 90)
+    SensorLimits("temp",                "Coolant Temp",         "0105", tempCelcius, "C", 0, 140, 90, 99,   True), # 90C is optimal temp
     Sensor("short_term_fuel_trim_1",    "S-T Fuel Trim",        "0106", fuel_trim_percent, "%",             False),
     Sensor("long_term_fuel_trim_1",     "L-T Fuel Trim",        "0107", fuel_trim_percent, "%",             False),
     Sensor("short_term_fuel_trim_2",    "S-T Fuel Trim",        "0108", fuel_trim_percent, "%",             False),
     Sensor("long_term_fuel_trim_2",     "L-T Fuel Trim",        "0109", fuel_trim_percent, "%",             False),
     Sensor("fuel_pressure",             "FuelRail Pressure",    "010A", cpass, "",                          False),
     Sensor("manifold_pressure",         "Intk Manifold",        "010B", intake_m_pres, "psi",               True),
-    SensorLimits("rpm",                 "Engine RPM",           "010C1", rpm, "", 0, 5500, 1000, 2500,      True), # change max safe to 4650 (5k is redline)
+    SensorLimits("rpm",                 "Engine RPM",           "010C1", rpm, "", 0, 5500, 1000, 4650,      True), # 5k is redline
     SensorLimits("speed",               "Vehicle Speed",        "010D1", speedMph, "MPH", 0, 160, 0, 70,    True),
     Sensor("timing_advance",            "Timing Advance",       "010E", timing_advance, "degrees",          False),
     Sensor("intake_air_temp",           "Intake Air Temp",      "010F", tempCelcius, "C",                   False),
