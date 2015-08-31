@@ -173,24 +173,28 @@ class OBDPanelGauges(wx.Panel):
         for sensor in self.sensors:
             self.port.updateSensor(sensor)
             
-            if i == self.currSensorIndex:
-                # Update value on GUI
+            if i == self.currSensorIndex:  
                 formattedValue = sensor.getFormattedValue()
                 
+                # Update GUI
                 # Index 0 is sensor value, index 1 is sensor name
                 self.texts[0].SetLabel(formattedValue)
+                self.texts[1].SetLabel(sensor.name)
                 
                 # Colour text based on sensor limits
                 if type(sensor) is SensorLimits:
                     # Is sensor value within safe limit?
                     if sensor.value >= sensor.lowerSafeLimit and sensor.value <= sensor.upperSafeLimit:
                         # Within safe limits
+                        print "within safe limit"
                         self.texts[0].SetForegroundColour(wx.Colour(0,255,0))
                     elif sensor.value > sensor.upperSafeLimit:
                         # Above safe limit
+                        print "above safe limit"
                         self.texts[0].SetForegroundColour(wx.Colour(255,0,0))
                     else:
                         # Below safe limit
+                        print "Below safe limit"
                         self.texts[0].SetForegroundColour(wx.Colour(255,255,0))
             
             i += 1
@@ -208,8 +212,8 @@ class OBDPanelGauges(wx.Panel):
         if self.currSensorIndex >= len(self.sensors):
             self.currSensorIndex = 0
             
-            # Update GUI
-            self.createGaugeGui()
+        # Update sensors and GUI
+        self.obdUpdate()
 				
                 
     def onRightClick(self, event):
@@ -220,8 +224,8 @@ class OBDPanelGauges(wx.Panel):
         if self.currSensorIndex < 0:
             self.currSensorIndex = len(self.sensors) - 1
             
-            # Update GUI
-            self.createGaugeGui()
+        # Update sensors and GUI
+        self.obdUpdate()
             
             
     def OnPaint(self, event):
