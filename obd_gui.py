@@ -135,7 +135,7 @@ class OBDPanelGauges(wx.Panel):
         
         # Create text for sensor value
         t1 = wx.StaticText(parent=self, label=formatted, style=wx.ALIGN_CENTER)
-        font1 = wx.Font(30, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
+        font1 = wx.Font(26, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
         t1.SetFont(font1)
         t1.SetForegroundColour('WHITE')
         boxSizer.Add(t1, 0, wx.ALIGN_CENTER | wx.ALL, 70)
