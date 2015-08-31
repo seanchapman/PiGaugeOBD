@@ -213,7 +213,7 @@ class CoolantSensor(SensorLimits):
         formatted = Sensor.getFormattedValue(self)
         
         # Add oil temp indicator
-        formatted = formatted + str(" OIL:")
+        formatted = formatted + str(" \nOIL:")
         
         if self.bReachedOpTemp:
             if self.bOilTempReady:
