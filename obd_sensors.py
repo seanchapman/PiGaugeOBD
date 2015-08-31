@@ -185,6 +185,10 @@ class CoolantSensor(SensorLimits):
         # This defines the time to wait in seconds that oil takes to warm up after coolant has (default: 5 mins)
         self.oilTempDelay = 300
         
+        # This is the tolerance that the coolant must drop below after dropping past the lower safe limit in order for the oil to be
+        # flagged as "not ready" again
+        self.dropTempTolerance = 4
+        
     def update(self, newVal):
         Sensor.update(self, newVal)
         
@@ -196,7 +200,7 @@ class CoolantSensor(SensorLimits):
             self.timeLastReachedTemp = time.time()
         
         # Has the temp dropped? (shouldn't happen, unless the engine is switched off. best to handle it anyway.)
-        if self.bReachedOpTemp and self.value < self.lowerSafeLimit:
+        if self.bReachedOpTemp and self.value < (self.lowerSafeLimit - self.dropTempTolerance):
             # This will essentially reset the oil warm-up timer
             self.bReachedOpTemp = False
             self.bOilTempReady = False
@@ -221,7 +225,7 @@ class CoolantSensor(SensorLimits):
                 formatted = formatted + str("OK")
             else:
                 # Display countdown
-                timeLeft = self.timeLastReachedTemp + self.oilTempDelay - time.time()
+                timeLeft = int(self.timeLastReachedTemp + self.oilTempDelay - time.time())
                 formatted = formatted + str(timeLeft) + str("s")
         else:
             # Wait for coolant temp
@@ -238,7 +242,7 @@ SENSORS = [
     Sensor("dtc_ff",                    "DTC C-F-F",            "0102", cpass, "",                          False),      
     Sensor("fuel_status",               "Fuel System Stat",     "0103", cpass, "",                          False),
     Sensor("load",                      "Calc Load Value",      "01041", percent_scale, "",                 True),    
-    CoolantSensor("temp",               "Coolant Temp",         "0105", tempCelcius, "C", 0, 140, 60, 99,   True), # 90C is optimal temp - change back to 88 when not testing!
+    CoolantSensor("temp",               "Coolant Temp",         "0105", tempCelcius, "C", 0, 140, 88, 99,   True), # 90C is optimal temp
     Sensor("short_term_fuel_trim_1",    "S-T Fuel Trim",        "0106", fuel_trim_percent, "%",             False),
     Sensor("long_term_fuel_trim_1",     "L-T Fuel Trim",        "0107", fuel_trim_percent, "%",             False),
     Sensor("short_term_fuel_trim_2",    "S-T Fuel Trim",        "0108", fuel_trim_percent, "%",             False),
