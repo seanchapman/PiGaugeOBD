@@ -300,6 +300,7 @@ class OBDLoadingPanel(wx.Panel):
         self.sensors = self.obdConn.get_sensors()
         self.port = self.obdConn.get_port()
 
+        # This tells the main frame to check that we have a connection now
         self.GetParent().update(None)
 
 
@@ -340,7 +341,10 @@ class OBDFrame(wx.Frame):
     def update(self, event):
         if self.panelLoading:
             connection = self.panelLoading.getConnection()
+            
+            # Sensors are actually in the list format Sensors[SensorIndex, SensorObj]
             sensors = self.panelLoading.getSensors()
+            
             port = self.panelLoading.getPort()
             self.panelLoading.Destroy()
         self.panelGauges = OBDPanelGauges(self)
@@ -352,8 +356,8 @@ class OBDFrame(wx.Frame):
             # Get only the enabled sensors and set them in the main gauge GUI
             enabledSensors = []
             for sensor in sensors:
-                if sensor.enabled == True:
-                    enabledSensors.append(sensor)
+                if sensor[1].enabled == True:
+                    enabledSensors.append(sensor[1])
         
             self.panelGauges.sensors = enabledSensors
             self.panelGauges.port = port

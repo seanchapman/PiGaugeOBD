@@ -203,7 +203,7 @@ SENSORS = [
     Sensor("o2_sensor_position_b",      "Loc of O2 sensor",     "011D", cpass, "",                          False),
     Sensor("aux_input",                 "Aux input status",     "011E", cpass, "",                          False),
     Sensor("engine_time",               "Engine Start MIN",     "011F", sec_to_min, "min",                  True),
-    Sensor("engine_mil_time",           "Engine Run MIL",       "014D", sec_to_min, "min",                  False),
+    Sensor("engine_mil_time",           "Engine Run MIL",       "014D", sec_to_min, "min",                  False)
     ]
      
     
