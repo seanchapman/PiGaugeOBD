@@ -186,7 +186,7 @@ class CoolantSensor(SensorLimits):
         self.oilTempDelay = 300
         
     def update(self, newVal):
-        Sensor.update(newVal)
+        Sensor.update(self, newVal)
         
         # Is the sensor up-to-temp yet?
         if self.bReachedOpTemp == False and self.value >= self.lowerSafeLimit:
@@ -210,7 +210,7 @@ class CoolantSensor(SensorLimits):
             self.bOilTempReady = True
             
     def getFormattedValue(self):
-        formatted = Sensor.getFormattedValue()
+        formatted = Sensor.getFormattedValue(self)
         
         # Add oil temp indicator
         formatted = formatted + str(" OIL:")
