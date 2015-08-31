@@ -213,7 +213,7 @@ class OBDPanelGauges(wx.Panel):
             self.currSensorIndex = 0
             
         # Update sensors and GUI
-        self.obdUpdate()
+        self.obdUpdate(None)
 				
                 
     def onRightClick(self, event):
@@ -225,7 +225,7 @@ class OBDPanelGauges(wx.Panel):
             self.currSensorIndex = len(self.sensors) - 1
             
         # Update sensors and GUI
-        self.obdUpdate()
+        self.obdUpdate(None)
             
             
     def OnPaint(self, event):
