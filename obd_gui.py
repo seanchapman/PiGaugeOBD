@@ -172,9 +172,13 @@ class OBDPanelGauges(wx.Panel):
         self.Layout() 
 
         # Timer for update
-        self.timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.obdUpdate, self.timer)
-        self.timer.Start(500)
+        try:
+            self.timer.Start(500)
+        except NameError:
+            # Create timer
+            self.timer = wx.Timer(self)
+            self.Bind(wx.EVT_TIMER, self.obdUpdate, self.timer)
+            self.timer.Start(500)
 
 
     # Update gets fresh data from the sensors
