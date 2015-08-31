@@ -193,6 +193,21 @@ class OBDPanelGauges(wx.Panel):
                     else:
                         # Below safe limit
                         self.texts[0].SetForegroundColour(wx.Colour(255,255,0))
+                        
+                elif sensor.__class__.__name__ == "CoolantSensor":
+                    # Coolant sensor only shows green when oil temp is ready
+                    if sensor.bOilTempReady and sensor.value <= sensor.upperSafeLimit:
+                        # Oil temp ready and coolant safe
+                        self.texts[0].SetForegroundColour(wx.Colour(0,255,0))
+                    elif sensor.value > sensor.upperSafeLimit:
+                        # Coolant unsafe (too hot)
+                        self.texts[0].SetForegroundColour(wx.Colour(255,0,0))
+                    elif sensor.bOilTempReady == False and sensor.value >= sensor.lowerSafeLimit and sensor.value <= sensor.upperSafeLimit:
+                        # Oil not ready but coolant is safe
+                        self.texts[0].SetForegroundColour(wx.Colour(255,153,0))
+                    else:
+                        # Coolant unsafe(too cold)
+                        self.texts[0].SetForegroundColour(wx.Colour(255,255,0))
                 else:
                     self.texts[0].SetForegroundColour('WHITE')
             

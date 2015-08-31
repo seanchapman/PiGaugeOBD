@@ -22,6 +22,10 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ###########################################################################
 
+import time;
+import sys;
+
+
 def hex_to_int(str):
     i = eval("0x" + str, {}, {})
     return i
@@ -166,6 +170,64 @@ class SensorLimits(Sensor):
         self.max = max
         self.lowerSafeLimit = lowerSafeLimit
         self.upperSafeLimit = upperSafeLimit
+        
+        
+# The coolant sensor class is a bespoke class that is used to display when the coolant has been up to operating temperature for
+# more than five minutes. This is for cars that don't have access to the oil temperature via OBD2 (like mine). Waiting five minutes
+# after the coolant has warmed up generally means the oil should be warmed up too, so we want to display this.
+class CoolantSensor(SensorLimits):
+    def __init__(self, shortName, sensorName, sensorCmd, valueParserFunc, strUnit, min, max, lowerSafeLimit, upperSafeLimit, bEnabled):
+        SensorLimits.__init__(self, shortName, sensorName, sensorCmd, valueParserFunc, strUnit, min, max, lowerSafeLimit, upperSafeLimit, bEnabled)
+        self.bReachedOpTemp = False
+        self.bOilTempReady = False
+        self.timeLastReachedTemp = sys.maxint
+        
+        # This defines the time to wait in seconds that oil takes to warm up after coolant has (default: 5 mins)
+        self.oilTempDelay = 300
+        
+    def update(self, newVal):
+        Sensor.update(newVal)
+        
+        # Is the sensor up-to-temp yet?
+        if self.bReachedOpTemp == False and self.value >= self.lowerSafeLimit:
+            self.bReachedOpTemp = True
+            
+            # Get current time (in seconds)
+            self.timeLastReachedTemp = time.time()
+        
+        # Has the temp dropped? (shouldn't happen, unless the engine is switched off. best to handle it anyway.)
+        if self.bReachedOpTemp and self.value < self.lowerSafeLimit:
+            # This will essentially reset the oil warm-up timer
+            self.bReachedOpTemp = False
+            self.bOilTempReady = False
+            self.timeLastReachedTemp = sys.maxint
+        
+        # If the engine has just started up (1 min or less) and the coolant is already up to temp then we can wait a little less time
+        #TODO: need a way to get engine running time sensor value here
+        # Has the sensor been up-to-temp for more than five minutes?
+        if self.bReachedOpTemp and time.time() > (self.timeLastReachedTemp + self.oilTempDelay):
+            # Oil temp should be ready now!
+            self.bOilTempReady = True
+            
+    def getFormattedValue(self):
+        formatted = Sensor.getFormattedValue()
+        
+        # Add oil temp indicator
+        formatted = formatted + str(" OIL:")
+        
+        if self.bReachedOpTemp:
+            if self.bOilTempReady:
+                # Oil is ready
+                formatted = formatted + str("OK")
+            else:
+                # Display countdown
+                timeLeft = self.timeLastReachedTemp + self.oilTempDelay - time.time()
+                formatted = formatted + str(timeLeft) + str("s")
+        else:
+            # Wait for coolant temp
+            formatted = formatted + str("WAIT")
+        
+        return formatted
 
 
 # NOTE: The ordering of this array is important
@@ -176,7 +238,7 @@ SENSORS = [
     Sensor("dtc_ff",                    "DTC C-F-F",            "0102", cpass, "",                          False),      
     Sensor("fuel_status",               "Fuel System Stat",     "0103", cpass, "",                          False),
     Sensor("load",                      "Calc Load Value",      "01041", percent_scale, "",                 True),    
-    SensorLimits("temp",                "Coolant Temp",         "0105", tempCelcius, "C", 0, 140, 90, 99,   True), # 90C is optimal temp
+    CoolantSensor("temp",               "Coolant Temp",         "0105", tempCelcius, "C", 0, 140, 88, 99,   True), # 90C is optimal temp
     Sensor("short_term_fuel_trim_1",    "S-T Fuel Trim",        "0106", fuel_trim_percent, "%",             False),
     Sensor("long_term_fuel_trim_1",     "L-T Fuel Trim",        "0107", fuel_trim_percent, "%",             False),
     Sensor("short_term_fuel_trim_2",    "S-T Fuel Trim",        "0108", fuel_trim_percent, "%",             False),
