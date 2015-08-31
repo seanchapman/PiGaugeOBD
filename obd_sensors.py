@@ -238,7 +238,7 @@ SENSORS = [
     Sensor("dtc_ff",                    "DTC C-F-F",            "0102", cpass, "",                          False),      
     Sensor("fuel_status",               "Fuel System Stat",     "0103", cpass, "",                          False),
     Sensor("load",                      "Calc Load Value",      "01041", percent_scale, "",                 True),    
-    CoolantSensor("temp",               "Coolant Temp",         "0105", tempCelcius, "C", 0, 140, 88, 99,   True), # 90C is optimal temp
+    CoolantSensor("temp",               "Coolant Temp",         "0105", tempCelcius, "C", 0, 140, 60, 99,   True), # 90C is optimal temp - change back to 88 when not testing!
     Sensor("short_term_fuel_trim_1",    "S-T Fuel Trim",        "0106", fuel_trim_percent, "%",             False),
     Sensor("long_term_fuel_trim_1",     "L-T Fuel Trim",        "0107", fuel_trim_percent, "%",             False),
     Sensor("short_term_fuel_trim_2",    "S-T Fuel Trim",        "0108", fuel_trim_percent, "%",             False),
