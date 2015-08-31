@@ -211,9 +211,8 @@ class OBDPort:
          return None
 
      # get sensor value from command
-     def updateSensor(self, sensor_index):
+     def updateSensor(self, sensor):
          """Gets the latest value from OBD and updates it"""
-         sensor = obd_sensors.SENSORS[sensor_index]
          cmd = sensor.cmd
          self.send_command(cmd)
          data = self.get_result()
@@ -224,6 +223,10 @@ class OBDPort:
                  sensor.update(data)
          else:
              sensor.value = "NORESPONSE"
+     
+     def updateSensorByIndex(self, sensor_index):
+         sensor = obd_sensors.SENSORS[sensor_index]
+         self.updateSensor(sensor)
 
      # Get string of sensor name, raw value and unit from index
      def getSensorTuple(self, sensor_index):
@@ -248,7 +251,7 @@ class OBDPort:
          statusText=["Unsupported","Supported - Completed","Unsupported","Supported - Incompleted"]
          
          # Get latest sensor values
-         self.updateSensor(1)
+         self.updateSensorByIndex(1)
          statusRes = self.getSensorTuple(1)[1]
          
          statusTrans = [] #translate values to text
@@ -275,7 +278,7 @@ class OBDPort:
           dtcLetters = ["P", "C", "B", "U"]
           
           # Get DTC data
-          self.updateSensor(1)
+          self.updateSensorByIndex(1)
           r = self.getSensorTuple(1)[1] #data
           
           dtcNumber = r[0]
@@ -332,13 +335,13 @@ class OBDPort:
           file = open(filename, "w")
           start_time = time.time() 
           if file:
-               self.updateSensor(sensor_index)
+               self.updateSensorByIndex(sensor_index)
                data = self.getSensorTuple(sensor_index)
                file.write("%s     \t%s(%s)\n" % \
                          ("Time", string.strip(data[0]), data[2])) 
                while 1:
                     now = time.time()
-                    self.updateSensor(sensor_index)
+                    self.updateSensorByIndex(sensor_index)
                     data = self.getSensorTuple(sensor_index)
                     line = "%.6f,\t%s\n" % (now - start_time, data[1])
                     file.write(line)

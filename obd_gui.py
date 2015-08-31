@@ -130,8 +130,8 @@ class OBDPanelGauges(wx.Panel):
             
         # Fetch latest sensor values
         sensor = self.sensors[self.currSensorIndex]
-        self.port.updateSensor(self.currSensorIndex)
-        formatted = self.port.getSensorFormatted(index)
+        self.port.updateSensor(sensor)
+        formatted = sensor.getFormattedValue()
         
         # Create text for sensor value
         t1 = wx.StaticText(parent=self, label=formatted, style=wx.ALIGN_CENTER)
@@ -181,11 +181,11 @@ class OBDPanelGauges(wx.Panel):
     def obdUpdate(self, event):
         i = 0
         for sensor in self.sensors:
-            self.port.updateSensor(index)
+            self.port.updateSensor(sensor)
             
             if i == self.currSensorIndex:
                 # Update text on GUI
-                formattedValue = self.port.getSensorFormatted(index)
+                formattedValue = sensor.getFormattedValue()
                 if i < len(self.texts):
                     self.texts[i*2].SetLabel(formattedValue)
             
