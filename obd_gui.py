@@ -186,15 +186,12 @@ class OBDPanelGauges(wx.Panel):
                     # Is sensor value within safe limit?
                     if sensor.value >= sensor.lowerSafeLimit and sensor.value <= sensor.upperSafeLimit:
                         # Within safe limits
-                        print "within safe limit"
                         self.texts[0].SetForegroundColour(wx.Colour(0,255,0))
                     elif sensor.value > sensor.upperSafeLimit:
                         # Above safe limit
-                        print "above safe limit"
                         self.texts[0].SetForegroundColour(wx.Colour(255,0,0))
                     else:
                         # Below safe limit
-                        print "Below safe limit"
                         self.texts[0].SetForegroundColour(wx.Colour(255,255,0))
                 else:
                     self.texts[0].SetForegroundColour('WHITE')
