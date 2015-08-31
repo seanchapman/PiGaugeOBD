@@ -129,18 +129,32 @@ class OBDPanelGauges(wx.Panel):
         boxSizer = wx.StaticBoxSizer(box, wx.VERTICAL)
             
         # Fetch latest sensor values
-        sensor = self.sensors[currSensorIndex]
-        self.port.updateSensor(currSensorIndex)
+        sensor = self.sensors[self.currSensorIndex]
+        self.port.updateSensor(self.currSensorIndex)
         formatted = self.port.getSensorFormatted(index)
         
         # Create text for sensor value
         t1 = wx.StaticText(parent=self, label=formatted, style=wx.ALIGN_CENTER)
-        t1.SetForegroundColour('WHITE')
         font1 = wx.Font(30, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
         t1.SetFont(font1)
         boxSizer.Add(t1, 0, wx.ALIGN_CENTER | wx.ALL, 70)
         boxSizer.AddStretchSpacer()
         self.texts.append(t1)
+        
+        # Set sensor value colour
+        if type(sensor) is SensorLimits:
+            # Is sensor value within safe limit?
+            if sensor.value >= sensor.lowerSafeLimit and sensor.value <= sensor.upperSafeLimit:
+                # Within safe limits
+                t1.SetForegroundColour(wx.Colour(0,255,0))
+            elif sensor.value > sensor.upperSafeLimit:
+                # Above safe limit
+                t1.SetForegroundColour(wx.Colour(255,0,0))
+            else:
+                # Below safe limit
+                t1.SetForegroundColour(wx.Colour(255,255,0))
+        else:
+            t1.SetForegroundColour('WHITE')
 
         # Create Text for sensor name
         t2 = wx.StaticText(parent=self, label=sensor.name, style=wx.ALIGN_CENTER)
