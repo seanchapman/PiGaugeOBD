@@ -190,8 +190,9 @@ class OBDPanelGauges(wx.Panel):
             if i == self.currSensorIndex:
                 # Update text on GUI
                 formattedValue = sensor.getFormattedValue()
-                if i < len(self.texts):
-                    self.texts[i*2].SetLabel(formattedValue)
+                
+                # Index 0 is sensor name, index 1 is value
+                self.texts[1].SetLabel(formattedValue)
             
             i += 1
 
