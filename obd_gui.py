@@ -137,24 +137,10 @@ class OBDPanelGauges(wx.Panel):
         t1 = wx.StaticText(parent=self, label=formatted, style=wx.ALIGN_CENTER)
         font1 = wx.Font(30, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
         t1.SetFont(font1)
+        t1.SetForegroundColour('WHITE')
         boxSizer.Add(t1, 0, wx.ALIGN_CENTER | wx.ALL, 70)
         boxSizer.AddStretchSpacer()
         self.texts.append(t1)
-        
-        # Set sensor value colour
-        if type(sensor) is SensorLimits:
-            # Is sensor value within safe limit?
-            if sensor.value >= sensor.lowerSafeLimit and sensor.value <= sensor.upperSafeLimit:
-                # Within safe limits
-                t1.SetForegroundColour(wx.Colour(0,255,0))
-            elif sensor.value > sensor.upperSafeLimit:
-                # Above safe limit
-                t1.SetForegroundColour(wx.Colour(255,0,0))
-            else:
-                # Below safe limit
-                t1.SetForegroundColour(wx.Colour(255,255,0))
-        else:
-            t1.SetForegroundColour('WHITE')
 
         # Create Text for sensor name
         t2 = wx.StaticText(parent=self, label=sensor.name, style=wx.ALIGN_CENTER)
@@ -188,11 +174,24 @@ class OBDPanelGauges(wx.Panel):
             self.port.updateSensor(sensor)
             
             if i == self.currSensorIndex:
-                # Update text on GUI
+                # Update value on GUI
                 formattedValue = sensor.getFormattedValue()
                 
-                # Index 0 is sensor name, index 1 is value
-                self.texts[1].SetLabel(formattedValue)
+                # Index 0 is sensor value, index 1 is sensor name
+                self.texts[0].SetLabel(formattedValue)
+                
+                # Colour text based on sensor limits
+                if type(sensor) is SensorLimits:
+                    # Is sensor value within safe limit?
+                    if sensor.value >= sensor.lowerSafeLimit and sensor.value <= sensor.upperSafeLimit:
+                        # Within safe limits
+                        self.texts[0].SetForegroundColour(wx.Colour(0,255,0))
+                    elif sensor.value > sensor.upperSafeLimit:
+                        # Above safe limit
+                        self.texts[0].SetForegroundColour(wx.Colour(255,0,0))
+                    else:
+                        # Below safe limit
+                        self.texts[0].SetForegroundColour(wx.Colour(255,255,0))
             
             i += 1
 
