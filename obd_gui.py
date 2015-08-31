@@ -168,7 +168,7 @@ class OBDPanelGauges(wx.Panel):
         # Layout
         boxSizerMain.Add(gridSizer, 1, wx.EXPAND | wx.ALL, 0)
         self.SetSizer(boxSizerMain)
-        self.obdUpdate()
+        self.Refresh()
         self.Layout() 
 
         # Timer for update
