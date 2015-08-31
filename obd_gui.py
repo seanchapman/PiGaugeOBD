@@ -174,7 +174,7 @@ class OBDPanelGauges(wx.Panel):
         # Timer for update
         try:
             self.timer.Start(500)
-        except NameError:
+        except AttributeError:
             # Create timer
             self.timer = wx.Timer(self)
             self.Bind(wx.EVT_TIMER, self.obdUpdate, self.timer)
