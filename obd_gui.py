@@ -168,17 +168,17 @@ class OBDPanelGauges(wx.Panel):
         # Layout
         boxSizerMain.Add(gridSizer, 1, wx.EXPAND | wx.ALL, 0)
         self.SetSizer(boxSizerMain)
-        self.update()
+        self.obdUpdate()
         self.Layout() 
 
         # Timer for update
         self.timer = wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.update, self.timer)
+        self.Bind(wx.EVT_TIMER, self.obdUpdate, self.timer)
         self.timer.Start(500)
 
 
     # Update gets fresh data from the sensors
-    def update(self, event):
+    def obdUpdate(self, event):
         i = 0
         for sensor in self.sensors:
             self.port.updateSensor(index)

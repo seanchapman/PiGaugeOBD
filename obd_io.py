@@ -214,7 +214,6 @@ class OBDPort:
      def updateSensor(self, sensor_index):
          """Gets the latest value from OBD and updates it"""
          sensor = obd_sensors.SENSORS[sensor_index]
-         print "Sensor value before update: " + str(sensor.value)
          cmd = sensor.cmd
          self.send_command(cmd)
          data = self.get_result()
@@ -225,8 +224,6 @@ class OBDPort:
                  sensor.update(data)
          else:
              sensor.value = "NORESPONSE"
-         
-         print "Sensor value after update: " + str(sensor.value)
 
      # Get string of sensor name, raw value and unit from index
      def getSensorTuple(self, sensor_index):
