@@ -140,6 +140,8 @@ class Sensor:
         self.name = sensorName
         self.cmd = sensorCommand
         self.value = 0.0
+        self.minRecordedVal = sys.float_info.max
+        self.maxRecordedVal = sys.float_info.min
         self.valueParserFunc = valueParserFunc
         self.unit = strUnit
         self.enabled = bEnabled
@@ -147,6 +149,12 @@ class Sensor:
     # Update the sensor value
     def update(self, newVal):
         self.value = self.valueParserFunc(newVal)
+        
+        # Update min/max
+        if self.value < self.minRecordedVal:
+            self.minRecordedVal = self.value
+        if self.value > self.maxRecordedVal:
+            self.maxRecordedVal = self.value
         
     def getFormattedValue(self):
         # Round decimal places
@@ -157,6 +165,11 @@ class Sensor:
         
         # Add unit text
         formatted = formatted + str(self.unit)
+        
+        # TEMPORARY: Display min/max values
+        formatted = formatted + str("\nMIN:") + str(self.minRecordedVal)
+        formatted = formatted + str("\nMAX:") + str(self.maxRecordedVal)
+        
         
         return formatted
         
@@ -217,7 +230,7 @@ class CoolantSensor(SensorLimits):
         formatted = Sensor.getFormattedValue(self)
         
         # Add oil temp indicator
-        formatted = formatted + str(" \nOIL:")
+        formatted = formatted + str("\nOIL:")
         
         if self.bReachedOpTemp:
             if self.bOilTempReady:

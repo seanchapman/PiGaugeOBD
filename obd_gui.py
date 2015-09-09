@@ -22,6 +22,9 @@ from obd_sensors import *
 GAUGE_FILENAME		= "frame_C1.jpg"
 LOADING_BG_FILENAME	= "loading_bg.png"
 
+# Global update interval in milliseconds (this triggers the updating of the OBD sensors)
+GLOBAL_UPDATE_INTERVAL = 250
+
 #-------------------------------------------------------------------------------
 
 def obd_connect(obdCap):
@@ -159,12 +162,12 @@ class OBDPanelGauges(wx.Panel):
 
         # Timer for update
         try:
-            self.timer.Start(500)
+            self.timer.Start(GLOBAL_UPDATE_INTERVAL)
         except AttributeError:
             # Create timer
             self.timer = wx.Timer(self)
             self.Bind(wx.EVT_TIMER, self.obdUpdate, self.timer)
-            self.timer.Start(500)
+            self.timer.Start(GLOBAL_UPDATE_INTERVAL)
 
 
     # Update gets fresh data from the sensors
