@@ -167,8 +167,8 @@ class Sensor:
         formatted = formatted + str(self.unit)
         
         # TEMPORARY: Display min/max values
-        formatted = formatted + str("\nMIN:") + str("%.2f"%round(self.minRecordedVal, 3)))
-        formatted = formatted + str("\nMAX:") + str("%.2f"%round(self.maxRecordedVal, 3)))
+        formatted = formatted + str("\nMIN:") + str("%.2f"%round(self.minRecordedVal, 3))
+        formatted = formatted + str("\nMAX:") + str("%.2f"%round(self.maxRecordedVal, 3))
         
         
         return formatted

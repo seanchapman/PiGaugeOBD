@@ -23,7 +23,7 @@ GAUGE_FILENAME		= "frame_C1.jpg"
 LOADING_BG_FILENAME	= "loading_bg.png"
 
 # Global update interval in milliseconds (this triggers the updating of the OBD sensors)
-GLOBAL_UPDATE_INTERVAL = 250
+GLOBAL_UPDATE_INTERVAL = 400
 
 #-------------------------------------------------------------------------------
 
