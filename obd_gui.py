@@ -15,11 +15,12 @@ from threading import Thread
 from obd_capture import OBD_Capture
 from obd_sensors import SENSORS
 from obd_sensors import *
+from pigauge_features import *
 
 #-------------------------------------------------------------------------------
 
 # OBD variable
-GAUGE_FILENAME		= "frame_C1.jpg"
+GAUGE_FILENAME		= "frame_C2.jpg"
 LOADING_BG_FILENAME	= "loading_bg.png"
 
 # Global update interval in milliseconds (this triggers the updating of the OBD sensors)
@@ -100,10 +101,13 @@ class OBDPanelGauges(wx.Panel):
         # Initialise connection, sensors, port and list variables
         self.connection = None
         self.currSensorIndex = 0
-        self.sensors = []  # Note: This is populated with the enabled sensors by OBDFrame before it calls createGaugeGui
+        self.sensors = {}  # Indexed by sensor shortname. Note: This is populated with the enabled sensors by OBDFrame before it calls createGaugeGui
         self.port = None
         self.boxes = []
         self.texts = []
+        
+        # Declare which features should be enabled
+        self.features = [TurboTimer(True)]
         
         
     # Create the GUI for the gauges
@@ -122,38 +126,57 @@ class OBDPanelGauges(wx.Panel):
         boxSizerMain = wx.BoxSizer(wx.VERTICAL)
 
         # Grid sizer
-        nrows, ncols = 1, 1
-        vgap, hgap = 50, 50
+        nrows, ncols = 1, 2
+        vgap, hgap = 5, 5
         gridSizer = wx.GridSizer(nrows, ncols, vgap, hgap)
 
-        # Create a box for currently selected sensor
-        box = wx.StaticBox(self, wx.ID_ANY)
-        self.boxes.append(box)
-        boxSizer = wx.StaticBoxSizer(box, wx.VERTICAL)
+        # Create a box for left column (currently selected sensor)
+        leftBox = wx.StaticBox(self, wx.ID_ANY)
+        self.boxes.append(leftBox)
+        leftSizer = wx.StaticBoxSizer(leftBox, wx.VERTICAL)
             
         # Fetch latest sensor values
-        sensor = self.sensors[self.currSensorIndex]
+        sensor = self.sensors.values()[self.currSensorIndex]
         self.port.updateSensor(sensor)
         formatted = sensor.getFormattedValue()
         
         # Create text for sensor value
-        t1 = wx.StaticText(parent=self, label=formatted, style=wx.ALIGN_CENTER)
+        tSensorVal = wx.StaticText(parent=self, label=formatted, style=wx.ALIGN_LEFT)
         font1 = wx.Font(26, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
-        t1.SetFont(font1)
-        t1.SetForegroundColour('WHITE')
-        boxSizer.Add(t1, 0, wx.ALIGN_CENTER | wx.ALL, 70)
-        boxSizer.AddStretchSpacer()
-        self.texts.append(t1)
+        tSensorVal.SetFont(font1)
+        tSensorVal.SetForegroundColour('WHITE')
+        leftSizer.Add(tSensorVal, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        leftSizer.AddStretchSpacer()
+        self.texts.append(tSensorVal)
 
         # Create Text for sensor name
-        t2 = wx.StaticText(parent=self, label=sensor.name, style=wx.ALIGN_CENTER)
-        t2.SetForegroundColour('WHITE')
+        tSensorName = wx.StaticText(parent=self, label=sensor.name, style=wx.ALIGN_CENTER)
+        tSensorName.SetForegroundColour('WHITE')
         font2 = wx.Font(10, wx.ROMAN, wx.NORMAL, wx.BOLD, faceName="Monaco")
-        t2.SetFont(font2)
-        boxSizer.Add(t2, 0, wx.ALIGN_CENTER | wx.ALL, 45)
-        self.texts.append(t2)
-        gridSizer.Add(boxSizer, 1, wx.EXPAND | wx.ALL)
-           
+        tSensorName.SetFont(font2)
+        leftSizer.Add(tSensorName, 0, wx.ALIGN_CENTER | wx.ALL, 45)
+        self.texts.append(tSensorName)
+        
+        # Add left sizer to grid
+        gridSizer.Add(leftSizer, 1, wx.EXPAND | wx.ALL)
+        
+        # Create box for right column (additional info)
+        rightBox = wx.StaticBox(self, wx.ID_ANY)
+        self.boxes.append(rightBox)
+        rightSizer = wx.StaticBoxSizer(rightBox, wx.VERTICAL)
+        
+        # Add info text box to right column
+        tInfoBox = wx.TextCtrl(self, pos=(5,5), size=(100,220), style=wx.TE_READONLY | wx.TE_MULTILINE)
+        tInfoBox.SetBackgroundColour('#21211f')
+        tInfoBox.SetForegroundColour(wx.WHITE)
+        tInfoBox.SetFont(wx.Font(14, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco"))
+        
+        rightSizer.Add(tInfoBox, 0, wx.EXPAND | wx.ALL, 5)
+        self.texts.append(tInfoBox)
+        
+        # Add right sizer to grid
+        gridSizer.Add(rightSizer, 1, wx.EXPAND | wx.ALL)
+        
         # Layout
         boxSizerMain.Add(gridSizer, 1, wx.EXPAND | wx.ALL, 0)
         self.SetSizer(boxSizerMain)
@@ -170,17 +193,17 @@ class OBDPanelGauges(wx.Panel):
             self.timer.Start(GLOBAL_UPDATE_INTERVAL)
 
 
-    # Update gets fresh data from the sensors
+    # Update gets fresh data from the sensors and updates features
     def obdUpdate(self, event):
         i = 0
-        for sensor in self.sensors:
+        for shortname, sensor in self.sensors.iteritems():
             self.port.updateSensor(sensor)
             
             if i == self.currSensorIndex:  
                 formattedValue = sensor.getFormattedValue()
                 
                 # Update GUI
-                # Index 0 is sensor value, index 1 is sensor name
+                # Index 0 is sensor value, index 1 is sensor name, index 2 is info textbox
                 self.texts[0].SetLabel(formattedValue)
                 self.texts[1].SetLabel(sensor.name)
                 
@@ -215,6 +238,12 @@ class OBDPanelGauges(wx.Panel):
                     self.texts[0].SetForegroundColour('WHITE')
             
             i += 1
+            
+        # Update features, passing in the sensor list and info text box
+        self.texts[2].Clear()
+        for feature in self.features:
+            feature.update(self.sensors, self.texts[2])
+            self.texts[2].AppendText("\n")
 
 
     def onCtrlC(self, event):
@@ -293,7 +322,7 @@ class OBDLoadingPanel(wx.Panel):
         self.textCtrl.SetForegroundColour(wx.WHITE)
         self.textCtrl.SetFont(wx.Font(10, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco"))
 		
-        self.textCtrl.AppendText(" Opening interface (serial port)\n")     
+        self.textCtrl.AppendText(" Opening interface (serial port)\n")
         self.textCtrl.AppendText(" Trying to connect...\n")
         
         self.timer0 = wx.Timer(self)
@@ -382,9 +411,8 @@ class OBDFrame(wx.Frame):
             enabledSensors = []
             for sensor in sensors:
                 if sensor[1].enabled == True:
-                    enabledSensors.append(sensor[1])
+                    self.panelGauges.sensors[sensor[1].shortname] = sensor[1]
         
-            self.panelGauges.sensors = enabledSensors
             self.panelGauges.port = port
             
         self.sizer = wx.BoxSizer(wx.VERTICAL)
