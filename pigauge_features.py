@@ -15,6 +15,7 @@ class Feature:
         pass
 
 # The manual turbo timer feature lets you know when it is safe to switch off your engine.
+# The base cooldown is 2 minutes, with a minute added for every hour driven, up to a maximum of 5 minutes.
 class TurboTimer(Feature):
     def __init__(self, bEnabled):
         Feature.__init__(self, bEnabled)
@@ -23,13 +24,34 @@ class TurboTimer(Feature):
         self.timeStartedIdling = sys.maxint
         
         self.currentlyIdling = False
-        
-        self.cooldownPeriod = 120 # seconds
         self.idleRpm = 1000
         
+        # All in seconds
+        self.minCooldown = 90
+        self.maxCooldown = 300
+        self.cooldownIncrement = 80 # How much to increment the cooldown by per run time multiple
+        
+        # Engine running time multiple to increase cooldown (in minutes)
+        self.runTimeMultiple = 60
+        
+    # Calculates the optimal cooldown time in seconds
+    def calcCooldown(self, sensorList):
+        # Get engine run time
+        runTime = sensorList["engine_time"].value
+        hoursRan = runTime / self.runTimeMultiple
+        percentCurrentHour = float(runTime % self.runTimeMultiple) / self.runTimeMultiple
+        
+        # Calculate
+        cooldown = self.minCooldown + (self.cooldownIncrement * hoursRan) + (self.cooldownIncrement * percentCurrentHour)
+        if cooldown > self.maxCooldown:
+            cooldown = self.maxCooldown
+        
+        return cooldown
+    
     def update(self, sensorList, tInfoBox):
         # Get current RPM
         rpm = sensorList["rpm"].value
+        cooldown = self.calcCooldown(sensorList)
     
         # Detect engine entering idle
         if self.currentlyIdling == False and rpm < self.idleRpm:
@@ -41,12 +63,12 @@ class TurboTimer(Feature):
             self.timeStartedIdling = sys.maxint
             self.currentlyIdling = False
             
-        # Start countdown after 60 seconds of idle
+        # Start countdown after 30 seconds of idle
         if self.currentlyIdling:
             idlingTime = time.time() - self.timeStartedIdling
-            if idlingTime > 60:
-                if idlingTime > self.cooldownPeriod:
+            if idlingTime > 30:
+                if idlingTime > cooldown:
                     tInfoBox.AppendText("TurboTimer: SAFE.\n")
                 else:
-                    timeLeft = int(self.cooldownPeriod - idlingTime)
+                    timeLeft = int(cooldown - idlingTime)
                     tInfoBox.AppendText("TurboTimer: " + str(timeLeft) + "s\n")

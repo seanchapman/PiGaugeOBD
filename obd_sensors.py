@@ -218,8 +218,6 @@ class CoolantSensor(SensorLimits):
             self.bOilTempReady = False
             self.timeLastReachedTemp = sys.maxint
         
-        # If the engine has just started up (1 min or less) and the coolant is already up to temp then we can wait a little less time
-        #TODO: need a way to get engine running time sensor value here
         # Has the sensor been up-to-temp for more than five minutes?
         if self.bReachedOpTemp and time.time() > (self.timeLastReachedTemp + self.oilTempDelay):
             # Oil temp should be ready now!
