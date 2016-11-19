@@ -24,6 +24,7 @@
 
 import time
 import sys
+import wx
 
 
 def hex_to_int(str):
@@ -157,20 +158,24 @@ class Sensor:
             self.maxRecordedVal = self.value
         
     def getFormattedValue(self):
-        # Round decimal places
-        if type(self.value)==float:
-            formatted = str("%.2f"%round(self.value, 3))
+        # Get the actual value unless we don't have a command set (debug mode)
+        if self.cmd:
+            # Round decimal places
+            if type(self.value)==float:
+                formatted = str("%.2f"%round(self.value, 3))
+            else:
+                formatted = str(self.value)
+
+            # Add unit text
+            formatted = formatted + str(self.unit)
+
+            # TEMPORARY: Display min/max values
+            #formatted = formatted + str("\nMIN:") + str("%.2f"%round(self.minRecordedVal, 3))
+            #formatted = formatted + str("\nMAX:") + str("%.2f"%round(self.maxRecordedVal, 3))
+
+            return formatted
         else:
-            formatted = str(self.value)
-        
-        # Add unit text
-        formatted = formatted + str(self.unit)
-        
-        # TEMPORARY: Display min/max values
-        #formatted = formatted + str("\nMIN:") + str("%.2f"%round(self.minRecordedVal, 3))
-        #formatted = formatted + str("\nMAX:") + str("%.2f"%round(self.maxRecordedVal, 3))
-        
-        return formatted
+            return 'NULL'
         
 # Adapter sensor class used for data values with units, but also min/max values and lower and upper safe limits
 # The safe lower limit is the lower bound for a safe value (e.g. the lowest standard operating temperature)
@@ -182,6 +187,18 @@ class SensorLimits(Sensor):
         self.max = max
         self.lowerSafeLimit = lowerSafeLimit
         self.upperSafeLimit = upperSafeLimit
+
+    # Update UI to reflect status of sensor value within the limits
+    def updateUi(self, uiElement):
+        if self.value >= self.lowerSafeLimit and self.value <= self.upperSafeLimit:
+            # Within safe limits
+            uiElement.SetForegroundColour(wx.Colour(0, 255, 0))
+        elif self.value > self.upperSafeLimit:
+            # Above safe limit
+            uiElement.SetForegroundColour(wx.Colour(255, 0, 0))
+        else:
+            # Below safe limit
+            uiElement.SetForegroundColour(wx.Colour(255, 255, 0))
         
         
 # The coolant sensor class is a bespoke class that is used to display when the coolant has been up to operating temperature for
@@ -243,10 +260,25 @@ class CoolantSensor(SensorLimits):
         
         return formatted
 
+    # Updates the colours on the UI to reflect the status of the coolant
+    def updateUi(self, uiElement):
+        if self.bOilTempReady and self.value <= self.upperSafeLimit:
+            # Oil temp ready and coolant safe
+            uiElement.SetForegroundColour(wx.Colour(0, 255, 0))
+        elif self.value > self.upperSafeLimit:
+            # Coolant unsafe (too hot)
+            uiElement.SetForegroundColour(wx.Colour(255, 0, 0))
+        elif self.bOilTempReady == False and self.value >= self.lowerSafeLimit and self.value <= self.upperSafeLimit:
+            # Oil not ready but coolant is safe
+            uiElement.SetForegroundColour(wx.Colour(255, 153, 0))
+        else:
+            # Coolant unsafe(too cold)
+            uiElement.SetForegroundColour(wx.Colour(255, 255, 0))
+
 
 # NOTE: The ordering of this array is important
 SENSORS = [
-    #       CODE                        NAME                    PID                                         ENABLED
+    #CODE/SHORTNAME                     NAME                    PID                                         ENABLED
     Sensor("pids",                      "Supported PIDs",       "0100", hex_to_bitstring, "",               True), 
     Sensor("dtc_status",                "S-S DTC Cleared",      "0101", dtc_decrypt, "",                    False),    
     Sensor("dtc_ff",                    "DTC C-F-F",            "0102", cpass, "",                          False),      

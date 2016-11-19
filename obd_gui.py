@@ -12,14 +12,64 @@ import wx
 
 from obd_loading import *
 from pigauge_features import *
+from obd_sensors import Sensor
 
 #-------------------------------------------------------------------------------
 
 # Gauge texture
-GAUGE_FILENAME		= "frame_C2.jpg"
+GAUGE_FILENAME = "frame_C2.jpg"
 
 # Global update interval in milliseconds (this triggers the updating of the OBD sensors)
 GLOBAL_UPDATE_INTERVAL = 400
+
+# True = speedometer style UI
+# False = gauge pod style UI
+SPEEDOMETER_STYLE = True
+
+# Short names for the sensors displayed in speedo mode
+SPEEDO_SENSOR_SHORTNAMES = ['rpm', 'speed', 'temp']
+
+#-------------------------------------------------------------------------------
+
+# Gets and updates the sensor, if the sensors list has been populated, otherwise returns debug sensor
+def GetAndUpdateSensor(sensors, index, port):
+    if sensors:
+        # Fetch latest sensor values
+        sensor = sensors.values()[index]
+        port.updateSensor(sensor)
+        return sensor
+    else:
+        return Sensor(str(index), str(index), None, None, None, None)
+
+# The same as GetAndUpdateSensor but uses short name rather than index
+def GetAndUpdateSensorByName(sensors, shortName, port):
+    if sensors:
+        # Iterate to find sensor short name
+        for sensorShortName, sensor in sensors.iteritems():
+            if shortName == sensorShortName:
+                port.updateSensor(sensor)
+                return sensor
+    else:
+        return Sensor(shortName, shortName, None, None, None, None)
+
+def CreateSensorNameText(theParent, sensor):
+    tSensorName = wx.StaticText(parent=theParent, label=sensor.name, style=wx.ALIGN_CENTER)
+    tSensorName.SetForegroundColour('WHITE')
+    tSensorName.SetFont(wx.Font(10, wx.ROMAN, wx.NORMAL, wx.BOLD, faceName="Monaco"))
+    return tSensorName
+
+def CreateSensorValText(theParent, sensor):
+    tSensorVal = wx.StaticText(parent=theParent, label=sensor.getFormattedValue(), style=wx.ALIGN_LEFT)
+    tSensorVal.SetFont(wx.Font(26, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco"))
+    tSensorVal.SetForegroundColour('WHITE')
+    return tSensorVal
+
+def CreateInfoBox(theParent):
+    tInfoBox = wx.TextCtrl(theParent, pos=(5, 5), size=(100, 220), style=wx.TE_READONLY | wx.TE_MULTILINE)
+    tInfoBox.SetBackgroundColour('#21211f')
+    tInfoBox.SetForegroundColour(wx.WHITE)
+    tInfoBox.SetFont(wx.Font(14, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco"))
+    return tInfoBox
 
 #-------------------------------------------------------------------------------
 
@@ -48,31 +98,112 @@ class OBDPanelGauges(wx.Panel):
         # Initialise connection, sensors, port and list variables
         self.connection = None
         self.currSensorIndex = 0
-        self.sensors = {}  # Indexed by sensor shortname. Note: This is populated with the enabled sensors by OBDFrame before it calls createGaugeGui
+
+        # Indexed by sensor shortname. Note: This is populated with the enabled sensors by OBDFrame before it calls createGaugeGui
+        self.sensors = {}
+
         self.port = None
         self.boxes = []
-        self.texts = []
+
+        # Indexed by sensor shortname + 'name'/'value'. (ie 'rpmname', 'speedvalue'). Contains wx text elements
+        # With the exception of "infobox"
+        self.texts = {}
         
         # Declare which features should be enabled
         self.features = [TurboTimer(True)]
-        
-        
-    # Create the GUI for the gauges
-    def createGaugeGui(self):
-        """
-        Display the sensors.
-        """
 
+
+    # Creates a instrument cluster style GUI
+    def createSpeedoGui(self):
         # Destroy previous widgets
         for b in self.boxes: b.Destroy()
         for t in self.texts: t.Destroy()
         self.boxes = []
-        self.texts = []
+        self.texts = {}
 
         # Main sizer
-        boxSizerMain = wx.BoxSizer(wx.VERTICAL)
+        nrows, ncols = 2, 2
+        vgap, hgap = 5, 5
+        gridSizerMain = wx.GridSizer(nrows, ncols, vgap, hgap)
 
-        # Grid sizer
+        # Create RPM box
+        rpmBox = wx.StaticBox(self, wx.ID_ANY)
+        self.boxes.append(rpmBox)
+        rpmBoxSizer = wx.StaticBoxSizer(rpmBox, wx.VERTICAL)
+        rpmSensor = GetAndUpdateSensorByName(self.sensors, 'rpm', self.port)
+
+        # Create text for sensor value
+        tSensorVal = CreateSensorValText(self, rpmSensor)
+        rpmBoxSizer.Add(tSensorVal, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        rpmBoxSizer.AddStretchSpacer()
+        self.texts[rpmSensor.shortname + 'value'] = tSensorVal
+
+        # Create Text for sensor name
+        tSensorName = CreateSensorNameText(self, rpmSensor)
+        rpmBoxSizer.Add(tSensorName, 0, wx.ALIGN_CENTER | wx.ALL, 45)
+        self.texts[rpmSensor.shortname + 'name'] = tSensorName
+
+        # Create speed box
+        speedBox = wx.StaticBox(self, wx.ID_ANY)
+        self.boxes.append(speedBox)
+        speedBoxSizer = wx.StaticBoxSizer(speedBox, wx.VERTICAL)
+        speedSensor = GetAndUpdateSensorByName(self.sensors, 'speed', self.port)
+
+        # Create text for sensor value
+        tSensorVal = CreateSensorValText(self, speedSensor)
+        speedBoxSizer.Add(tSensorVal, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        speedBoxSizer.AddStretchSpacer()
+        self.texts[speedSensor.shortname + 'value'] = tSensorVal
+
+        # Create Text for sensor name
+        tSensorName = CreateSensorNameText(self, speedSensor)
+        speedBoxSizer.Add(tSensorName, 0, wx.ALIGN_CENTER | wx.ALL, 45)
+        self.texts[speedSensor.shortname + 'name'] = tSensorName
+
+        # Create coolant temp box
+        coolantBox = wx.StaticBox(self, wx.ID_ANY)
+        self.boxes.append(coolantBox)
+        coolantBoxSizer = wx.StaticBoxSizer(coolantBox, wx.VERTICAL)
+        coolantSensor = GetAndUpdateSensorByName(self.sensors, 'temp', self.port)
+
+        # Create text for sensor value
+        tSensorVal = CreateSensorValText(self, coolantSensor)
+        coolantBoxSizer.Add(tSensorVal, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        coolantBoxSizer.AddStretchSpacer()
+        self.texts[coolantSensor.shortname + 'value'] = tSensorVal
+
+        # Create Text for sensor name
+        tSensorName = CreateSensorNameText(self, coolantSensor)
+        coolantBoxSizer.Add(tSensorName, 0, wx.ALIGN_CENTER | wx.ALL, 45)
+        self.texts[coolantSensor.shortname + 'name'] = tSensorName
+
+        # Add to screen
+        gridSizerMain.Add(speedBoxSizer, 1, wx.EXPAND | wx.TOP | wx.LEFT | wx.ALIGN_CENTER)
+        gridSizerMain.Add(rpmBoxSizer, 1, wx.EXPAND | wx.TOP | wx.RIGHT | wx.ALIGN_CENTER)
+        gridSizerMain.Add(coolantBoxSizer, 1, wx.EXPAND | wx.BOTTOM | wx.RIGHT | wx.ALIGN_CENTER)
+        self.SetSizer(gridSizerMain)
+        self.Refresh()
+        self.Layout()
+
+        # Timer for update
+        try:
+            self.timer.Start(GLOBAL_UPDATE_INTERVAL)
+        except AttributeError:
+            # Create timer
+            self.timer = wx.Timer(self)
+            self.Bind(wx.EVT_TIMER, self.obdUpdate, self.timer)
+            self.timer.Start(GLOBAL_UPDATE_INTERVAL)
+
+
+    # Creates a single gauge pod style GUI
+    def createGaugeGui(self):
+        # Destroy previous widgets
+        for b in self.boxes: b.Destroy()
+        for t in self.texts: t.Destroy()
+        self.boxes = []
+        self.texts = {}
+
+        # Grid layout
         nrows, ncols = 1, 2
         vgap, hgap = 5, 5
         gridSizer = wx.GridSizer(nrows, ncols, vgap, hgap)
@@ -81,28 +212,19 @@ class OBDPanelGauges(wx.Panel):
         leftBox = wx.StaticBox(self, wx.ID_ANY)
         self.boxes.append(leftBox)
         leftSizer = wx.StaticBoxSizer(leftBox, wx.VERTICAL)
-            
-        # Fetch latest sensor values
-        sensor = self.sensors.values()[self.currSensorIndex]
-        self.port.updateSensor(sensor)
-        formatted = sensor.getFormattedValue()
+
+        sensor = GetAndUpdateSensor(self.sensors, self.currSensorIndex, self.port)
         
         # Create text for sensor value
-        tSensorVal = wx.StaticText(parent=self, label=formatted, style=wx.ALIGN_LEFT)
-        font1 = wx.Font(26, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco")
-        tSensorVal.SetFont(font1)
-        tSensorVal.SetForegroundColour('WHITE')
+        tSensorVal = CreateSensorValText(self, sensor)
         leftSizer.Add(tSensorVal, 0, wx.ALIGN_LEFT | wx.ALL, 5)
         leftSizer.AddStretchSpacer()
-        self.texts.append(tSensorVal)
+        self.texts['sensorvalue'] = tSensorVal
 
         # Create Text for sensor name
-        tSensorName = wx.StaticText(parent=self, label=sensor.name, style=wx.ALIGN_CENTER)
-        tSensorName.SetForegroundColour('WHITE')
-        font2 = wx.Font(10, wx.ROMAN, wx.NORMAL, wx.BOLD, faceName="Monaco")
-        tSensorName.SetFont(font2)
+        tSensorName = CreateSensorNameText(self, sensor)
         leftSizer.Add(tSensorName, 0, wx.ALIGN_CENTER | wx.ALL, 45)
-        self.texts.append(tSensorName)
+        self.texts['sensorname'] = tSensorName
         
         # Add left sizer to grid
         gridSizer.Add(leftSizer, 1, wx.EXPAND | wx.ALL)
@@ -113,20 +235,15 @@ class OBDPanelGauges(wx.Panel):
         rightSizer = wx.StaticBoxSizer(rightBox, wx.VERTICAL)
         
         # Add info text box to right column
-        tInfoBox = wx.TextCtrl(self, pos=(5,5), size=(100,220), style=wx.TE_READONLY | wx.TE_MULTILINE)
-        tInfoBox.SetBackgroundColour('#21211f')
-        tInfoBox.SetForegroundColour(wx.WHITE)
-        tInfoBox.SetFont(wx.Font(14, wx.ROMAN, wx.NORMAL, wx.NORMAL, faceName="Monaco"))
-        
+        tInfoBox = CreateInfoBox(self)
         rightSizer.Add(tInfoBox, 0, wx.EXPAND | wx.ALL, 5)
-        self.texts.append(tInfoBox)
+        self.texts['infobox'] = tInfoBox
         
         # Add right sizer to grid
         gridSizer.Add(rightSizer, 1, wx.EXPAND | wx.ALL)
         
         # Layout
-        boxSizerMain.Add(gridSizer, 1, wx.EXPAND | wx.ALL, 0)
-        self.SetSizer(boxSizerMain)
+        self.SetSizer(gridSizer)
         self.Refresh()
         self.Layout() 
 
@@ -145,52 +262,34 @@ class OBDPanelGauges(wx.Panel):
         i = 0
         for shortname, sensor in self.sensors.iteritems():
             self.port.updateSensor(sensor)
-            
-            if i == self.currSensorIndex:  
-                formattedValue = sensor.getFormattedValue()
-                
-                # Update GUI
-                # Index 0 is sensor value, index 1 is sensor name, index 2 is info textbox
-                self.texts[0].SetLabel(formattedValue)
-                self.texts[1].SetLabel(sensor.name)
-                
-                # Colour text based on sensor limits
-                if sensor.__class__.__name__ == "SensorLimits":
-                    # Is sensor value within safe limit?
-                    if sensor.value >= sensor.lowerSafeLimit and sensor.value <= sensor.upperSafeLimit:
-                        # Within safe limits
-                        self.texts[0].SetForegroundColour(wx.Colour(0,255,0))
-                    elif sensor.value > sensor.upperSafeLimit:
-                        # Above safe limit
-                        self.texts[0].SetForegroundColour(wx.Colour(255,0,0))
-                    else:
-                        # Below safe limit
-                        self.texts[0].SetForegroundColour(wx.Colour(255,255,0))
-                        
-                elif sensor.__class__.__name__ == "CoolantSensor":
-                    # Coolant sensor only shows green when oil temp is ready
-                    if sensor.bOilTempReady and sensor.value <= sensor.upperSafeLimit:
-                        # Oil temp ready and coolant safe
-                        self.texts[0].SetForegroundColour(wx.Colour(0,255,0))
-                    elif sensor.value > sensor.upperSafeLimit:
-                        # Coolant unsafe (too hot)
-                        self.texts[0].SetForegroundColour(wx.Colour(255,0,0))
-                    elif sensor.bOilTempReady == False and sensor.value >= sensor.lowerSafeLimit and sensor.value <= sensor.upperSafeLimit:
-                        # Oil not ready but coolant is safe
-                        self.texts[0].SetForegroundColour(wx.Colour(255,153,0))
-                    else:
-                        # Coolant unsafe(too cold)
-                        self.texts[0].SetForegroundColour(wx.Colour(255,255,0))
-                else:
-                    self.texts[0].SetForegroundColour('WHITE')
-            
+
+            if SPEEDOMETER_STYLE:
+                # Update all displayed sensors
+                if shortname in SPEEDO_SENSOR_SHORTNAMES:
+                    # This is a currently displayed sensor
+                    formattedValue = sensor.getFormattedValue()
+                    self.texts[shortname + 'value'].SetLabel(formattedValue)
+            else:
+                # Update current sensor index only
+                if i == self.currSensorIndex:
+                    # Update GUI
+                    formattedValue = sensor.getFormattedValue()
+                    self.texts['sensorvalue'].SetLabel(formattedValue)
+                    self.texts['sensorname'].SetLabel(sensor.name)
+
+            # Update UI elements for special sensors (coolant etc.)
+            if sensor.__class__.__name__ != "Sensor":
+                sensor.updateUi(self.texts['sensorvalue'])
+            else:
+                self.texts['sensorvalue'].SetForegroundColour('WHITE')
             i += 1
-            
-        # Update features, passing in the sensor list and info text box
-        self.texts[2].Clear()
-        for feature in self.features:
-            feature.update(self.sensors, self.texts[2])
-            self.texts[2].AppendText("\n")
+
+        if SPEEDOMETER_STYLE == False:
+            # Update features, passing in the sensor list and info text box
+            self.texts['infobox'].Clear()
+            for feature in self.features:
+                feature.update(self.sensors, self.texts['infobox'])
+                self.texts['infobox'].AppendText("\n")
 
 
     def onCtrlC(self, event):
@@ -247,14 +346,19 @@ class OBDFrame(wx.Frame):
 
         
     def update(self, event):
-        if self.panelLoading:
+        if self.panelLoading and OBDLoadingPanel.DEBUG_MODE == False:
             connection = self.panelLoading.getConnection()
-            
+
             # Sensors are actually in the list format Sensors[SensorIndex, SensorObj]
             sensors = self.panelLoading.getSensors()
-            
+
             port = self.panelLoading.getPort()
-            self.panelLoading.Destroy()
+        else:
+            connection = None
+            sensors = None
+            port = None
+
+        self.panelLoading.Destroy()
         self.panelGauges = OBDPanelGauges(self)
         
         if connection:
@@ -271,7 +375,11 @@ class OBDFrame(wx.Frame):
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.panelGauges, 1, wx.EXPAND)
         self.SetSizer(self.sizer)
-        self.panelGauges.createGaugeGui()
+        if SPEEDOMETER_STYLE:
+            self.panelGauges.createSpeedoGui()
+        else:
+            self.panelGauges.createGaugeGui()
+
         self.panelGauges.SetFocus()
         self.Layout()
 

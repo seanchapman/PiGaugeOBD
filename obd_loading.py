@@ -10,11 +10,8 @@ from obd_connection import *
 LOADING_BG_FILENAME	= "loading_bg.png"
 
 class OBDLoadingPanel(wx.Panel):
-    """
-    Main panel for OBD application.
-
-    Show loading screen. Handle event from mouse/keyboard.
-    """
+    # True = skips connecting to the OBD port and just displays the GUI
+    DEBUG_MODE = True
 
     def __init__(self, *args, **kwargs):
         """
@@ -63,25 +60,26 @@ class OBDLoadingPanel(wx.Panel):
         if self.timer0:
             self.timer0.Stop()
 
-        # Connect to serial port, get ELM version, set CAN mode
-        self.obdConn = OBDConnection()
-        self.obdConn.connect()
-        connected = False
-        while not connected:
-            connected = self.obdConn.is_connected()
-            self.textCtrl.Clear()
-            self.textCtrl.AppendText(" Trying to connect ..." + time.asctime())
-            time.sleep(1)
+        if self.DEBUG_MODE == False:
+            # Connect to serial port, get ELM version, set CAN mode
+            self.obdConn = OBDConnection()
+            self.obdConn.connect()
+            connected = False
+            while not connected:
+                connected = self.obdConn.is_connected()
+                self.textCtrl.Clear()
+                self.textCtrl.AppendText(" Trying to connect ..." + time.asctime())
+                time.sleep(1)
 
-        # Connected, get list of available sensors
-        self.textCtrl.Clear()
-        port_name = self.obdConn.get_port_name()
-        if port_name:
-            self.textCtrl.AppendText(" Connected on port " + port_name + "\n")
-        self.textCtrl.AppendText(" Error? Hold ALT & ESC to view terminal.")
-        self.textCtrl.AppendText(str(self.obdConn.get_output()))
-        self.sensors = self.obdConn.get_sensors()
-        self.port = self.obdConn.get_port()
+            # Connected, get list of available sensors
+            self.textCtrl.Clear()
+            port_name = self.obdConn.get_port_name()
+            if port_name:
+                self.textCtrl.AppendText(" Connected on port " + port_name + "\n")
+            self.textCtrl.AppendText(" Error? Hold ALT & ESC to view terminal.")
+            self.textCtrl.AppendText(str(self.obdConn.get_output()))
+            self.sensors = self.obdConn.get_sensors()
+            self.port = self.obdConn.get_port()
 
         # This tells the main frame to check that we have a connection now
         self.GetParent().update(None)
