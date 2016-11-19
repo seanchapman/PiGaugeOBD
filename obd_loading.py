@@ -11,7 +11,7 @@ LOADING_BG_FILENAME	= "loading_bg.png"
 
 class OBDLoadingPanel(wx.Panel):
     # True = skips connecting to the OBD port and just displays the GUI
-    DEBUG_MODE = True
+    DEBUG_MODE = False
 
     def __init__(self, *args, **kwargs):
         """
