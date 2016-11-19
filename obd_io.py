@@ -25,8 +25,6 @@
 import serial
 import string
 import time
-from math import ceil
-from datetime import datetime
 
 import obd_sensors
 
@@ -93,7 +91,7 @@ class OBDPort:
          except serial.SerialException as e:
              print e
              self.State = 0
-             return None
+             return
              
          debug_display(self._notify_window, 1, "Interface successfully " + self.port.portstr + " opened")
          debug_display(self._notify_window, 1, "Connecting to ECU...")
@@ -103,12 +101,12 @@ class OBDPort:
             time.sleep(1)
          except serial.SerialException:
             self.State = 0
-            return None
-            
+            return
+
          self.ELMver = self.get_result()
-         if(self.ELMver is None):
+         if self.ELMver is None:
             self.State = 0
-            return None
+            return
          
          debug_display(self._notify_window, 2, "atz response:" + self.ELMver)
 
@@ -124,17 +122,17 @@ class OBDPort:
          self.send_command("0100")
          ready = self.get_result()
          
-         if(ready is None):
+         if ready is None:
             self.State = 0
-            return None
+            return
             
          debug_display(self._notify_window, 2, "0100 response:" + ready)
-         return None
+         return
               
      def close(self):
          """ Resets device and closes all associated filehandles"""
          
-         if (self.port!= None) and self.State==1:
+         if (self.port is not None) and (self.State == 1):
             self.send_command("atz")
             self.port.close()
          
@@ -187,23 +185,23 @@ class OBDPort:
              while 1:
                  c = self.port.read(1)
                  if len(c) == 0:
-                    if(repeat_count == 5):
+                    if repeat_count == 5:
                         break
                     print "Got nothing\n"
-                    repeat_count = repeat_count + 1
+                    repeat_count += 1
                     continue
                     
                  if c == '\r':
                     continue
                     
                  if c == ">":
-                    break;
+                    break
                      
                  if buffer != "" or c != ">": #if something is in buffer, add everything
                     buffer = buffer + c
                     
              #debug_display(self._notify_window, 3, "Get result:" + buffer)
-             if(buffer == ""):
+             if buffer == "":
                 return None
              return buffer
          else:
@@ -233,7 +231,7 @@ class OBDPort:
          """Returns 3-tuple of given sensors. 3-tuple consists of
          (Sensor Name (string), Sensor Value (string), Sensor Unit (string) ) """
          sensor = obd_sensors.SENSORS[sensor_index]
-         return (sensor.name, sensor.value, sensor.unit)
+         return sensor.name, sensor.value, sensor.unit
          
      # Get string of formatted sensor value from index
      def getSensorFormatted(self, sensor_index):
@@ -284,17 +282,16 @@ class OBDPort:
           dtcNumber = r[0]
           mil = r[1]
           DTCCodes = []
-          
-          
+
           print "Number of stored DTC:" + str(dtcNumber) + " MIL: " + str(mil)
           # get all DTC, 3 per mesg response
           for i in range(0, ((dtcNumber+2)/3)):
             self.send_command(GET_DTC_COMMAND)
             res = self.get_result()
             print "DTC result:" + res
-            for i in range(0, 3):
-                val1 = hex_to_int(res[3+i*6:5+i*6])
-                val2 = hex_to_int(res[6+i*6:8+i*6]) #get DTC codes from response (3 DTC each 2 bytes)
+            for j in range(0, 3):
+                val1 = hex_to_int(res[3+j*6:5+j*6])
+                val2 = hex_to_int(res[6+j*6:8+j*6]) #get DTC codes from response (3 DTC each 2 bytes)
                 val  = (val1<<8)+val2 #DTC val as int
                 
                 if val==0: #skip fill of last packet

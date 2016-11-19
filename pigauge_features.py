@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # This file defines features used by PiGaugeOBD, such as turbo timer and rev matcher.
 
-import time;
-import sys;
+import time
+import sys
 
 # Feature class is the base class which is used to run feature logic in a loop.
 # bEnabled sets wether the feature should be enabled or not

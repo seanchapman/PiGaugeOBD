@@ -22,8 +22,8 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ###########################################################################
 
-import time;
-import sys;
+import time
+import sys
 
 
 def hex_to_int(str):

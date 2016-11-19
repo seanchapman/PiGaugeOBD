@@ -1,15 +1,13 @@
 #!/usr/bin/env python
 
 import obd_io
-import serial
-import platform
 import obd_sensors
 from datetime import datetime
 import time
 
 from obd_utils import scanSerial
 
-class OBD_Capture():
+class OBD_Capture:
     def __init__(self):
         self.supportedSensorList = []
         self.port = None
@@ -21,13 +19,13 @@ class OBD_Capture():
         print portnames
         for port in portnames:
             self.port = obd_io.OBDPort(port, None, 2, 2)
-            if(self.port.State == 0):
+            if self.port.State == 0:
                 self.port.close()
                 self.port = None
             else:
                 break
 
-        if(self.port):
+        if self.port:
             print "Connected to "+self.port.port.name
             
     def is_connected(self):
@@ -60,7 +58,7 @@ class OBD_Capture():
         
         time.sleep(3)
         
-        if(self.port is None):
+        if self.port is None:
             return None
 
         # Loop until Ctrl C is pressed        
@@ -68,7 +66,6 @@ class OBD_Capture():
         current_time = str(localtime.hour)+":"+str(localtime.minute)+":"+str(localtime.second)+"."+str(localtime.microsecond)
         #log_string = current_time + "\n"
         text = current_time + "\n"
-        results = {}
         for supportedSensor in self.supportedSensorList:
             sensorIndex = supportedSensor[0]
             self.port.updateSensorByIndex(sensorIndex)

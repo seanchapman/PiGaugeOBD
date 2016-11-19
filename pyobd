@@ -135,7 +135,7 @@ class MyApp(wx.App):
             self.active   = []
             self.supp     = self.port.sensor(0)[1] #read supported PIDS
             
-            self.active.append(1); #PID 0 is always supported
+            self.active.append(1) #PID 0 is always supported
             
             wx.PostEvent(self._notify_window, ResultEvent([0,0,"X"]))
             wx.PostEvent(self._notify_window, DebugEvent([1,"Communication initialized..."]))
@@ -380,10 +380,10 @@ class MyApp(wx.App):
         self.status = self.MyListCtrl(self.nb, tID,style=wx.LC_REPORT|wx.SUNKEN_BORDER)
         self.status.InsertColumn(0, "Description",width=200)
         self.status.InsertColumn(1, "Value")
-        self.status.Append(["Link State","Disconnnected"]);
-        self.status.Append(["Protocol","---"]);
-        self.status.Append(["Cable version","---"]);
-        self.status.Append(["COM port",self.COMPORT]);
+        self.status.Append(["Link State","Disconnnected"])
+        self.status.Append(["Protocol","---"])
+        self.status.Append(["Cable version","---"])
+        self.status.Append(["COM port",self.COMPORT])
         
         self.nb.AddPage(self.status, "Status")
         
@@ -393,7 +393,7 @@ class MyApp(wx.App):
         self.nb.AddPage(self.OBDTests, "Tests")
                 
         for i in range(0,len(ptest)): #fill MODE 1 PID 1 test description 
-          self.OBDTests.Append([ptest[i],"---"]);
+          self.OBDTests.Append([ptest[i],"---"])
         
         self.build_sensor_page()
 
@@ -658,7 +658,7 @@ the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  0211
             #set and save SERTIMEOUT
             self.SERTIMEOUT = int(timeoutCtrl.GetValue())
             self.config.set("pyOBD","SERTIMEOUT",self.SERTIMEOUT)
-            self.status.SetStringItem(3,1,self.COMPORT); 
+            self.status.SetStringItem(3,1,self.COMPORT)
             
             #set and save RECONNATTEMPTS
             self.RECONNATTEMPTS = int(reconnectCtrl.GetValue())
