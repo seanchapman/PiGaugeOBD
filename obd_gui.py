@@ -134,7 +134,7 @@ class OBDPanelGauges(wx.Panel):
 
         # Create text for sensor value
         tSensorVal = CreateSensorValText(self, rpmSensor)
-        rpmBoxSizer.Add(tSensorVal, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        rpmBoxSizer.Add(tSensorVal, 0, wx.ALIGN_CENTER | wx.ALL, 1)
         rpmBoxSizer.AddStretchSpacer()
         self.texts[rpmSensor.shortname + 'value'] = tSensorVal
 
@@ -151,7 +151,7 @@ class OBDPanelGauges(wx.Panel):
 
         # Create text for sensor value
         tSensorVal = CreateSensorValText(self, speedSensor)
-        speedBoxSizer.Add(tSensorVal, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        speedBoxSizer.Add(tSensorVal, 0, wx.ALIGN_CENTER | wx.ALL, 1)
         speedBoxSizer.AddStretchSpacer()
         self.texts[speedSensor.shortname + 'value'] = tSensorVal
 
@@ -168,7 +168,7 @@ class OBDPanelGauges(wx.Panel):
 
         # Create text for sensor value
         tSensorVal = CreateSensorValText(self, coolantSensor)
-        coolantBoxSizer.Add(tSensorVal, 0, wx.ALIGN_LEFT | wx.ALL, 5)
+        coolantBoxSizer.Add(tSensorVal, 0, wx.ALIGN_CENTER | wx.ALL, 1)
         coolantBoxSizer.AddStretchSpacer()
         self.texts[coolantSensor.shortname + 'value'] = tSensorVal
 
