@@ -140,7 +140,7 @@ class OBDPanelGauges(wx.Panel):
 
         # Create Text for sensor name
         tSensorName = CreateSensorNameText(self, rpmSensor)
-        rpmBoxSizer.Add(tSensorName, 0, wx.ALIGN_CENTER | wx.ALL, 45)
+        rpmBoxSizer.Add(tSensorName, 0, wx.ALIGN_CENTER | wx.BOTTOM | wx.ALL, 45)
         self.texts[rpmSensor.shortname + 'name'] = tSensorName
 
         # Create speed box
@@ -157,7 +157,7 @@ class OBDPanelGauges(wx.Panel):
 
         # Create Text for sensor name
         tSensorName = CreateSensorNameText(self, speedSensor)
-        speedBoxSizer.Add(tSensorName, 0, wx.ALIGN_CENTER | wx.ALL, 45)
+        speedBoxSizer.Add(tSensorName, 0, wx.ALIGN_CENTER | wx.BOTTOM | wx.ALL, 45)
         self.texts[speedSensor.shortname + 'name'] = tSensorName
 
         # Create coolant temp box
@@ -174,7 +174,7 @@ class OBDPanelGauges(wx.Panel):
 
         # Create Text for sensor name
         tSensorName = CreateSensorNameText(self, coolantSensor)
-        coolantBoxSizer.Add(tSensorName, 0, wx.ALIGN_CENTER | wx.ALL, 45)
+        coolantBoxSizer.Add(tSensorName, 0, wx.ALIGN_CENTER | wx.BOTTOM | wx.ALL, 45)
         self.texts[coolantSensor.shortname + 'name'] = tSensorName
 
         # Add to screen
