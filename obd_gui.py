@@ -269,6 +269,12 @@ class OBDPanelGauges(wx.Panel):
                     # This is a currently displayed sensor
                     formattedValue = sensor.getFormattedValue()
                     self.texts[shortname + 'value'].SetLabel(formattedValue)
+                    
+                    # Update UI elements for special sensors (coolant etc.)
+                    if sensor.__class__.__name__ != "Sensor":
+                        sensor.updateUi(self.texts[shortname+'value'])
+                    else:
+                        self.texts[shortname+'value'].SetForegroundColour('WHITE')
             else:
                 # Update current sensor index only
                 if i == self.currSensorIndex:
@@ -277,11 +283,11 @@ class OBDPanelGauges(wx.Panel):
                     self.texts['sensorvalue'].SetLabel(formattedValue)
                     self.texts['sensorname'].SetLabel(sensor.name)
 
-            # Update UI elements for special sensors (coolant etc.)
-            if sensor.__class__.__name__ != "Sensor":
-                sensor.updateUi(self.texts['sensorvalue'])
-            else:
-                self.texts['sensorvalue'].SetForegroundColour('WHITE')
+                # Update UI elements for special sensors (coolant etc.)
+                if sensor.__class__.__name__ != "Sensor":
+                    sensor.updateUi(self.texts['sensorvalue'])
+                else:
+                    self.texts['sensorvalue'].SetForegroundColour('WHITE')
             i += 1
 
         if SPEEDOMETER_STYLE == False:
@@ -297,27 +303,23 @@ class OBDPanelGauges(wx.Panel):
 
         
     def onLeftClick(self, event):
-        """
-        Go to the next screen
-        """
-        self.currSensorIndex += 1
-        if self.currSensorIndex >= len(self.sensors):
-            self.currSensorIndex = 0
-            
-        # Update sensors and GUI
-        self.obdUpdate(None)
+        if SPEEDOMETER_STYLE == False:
+            self.currSensorIndex += 1
+            if self.currSensorIndex >= len(self.sensors):
+                self.currSensorIndex = 0
+                
+            # Update sensors and GUI
+            self.obdUpdate(None)
 				
                 
     def onRightClick(self, event):
-        """
-        Go to the previous screen
-        """
-        self.currSensorIndex -= 1
-        if self.currSensorIndex < 0:
-            self.currSensorIndex = len(self.sensors) - 1
-            
-        # Update sensors and GUI
-        self.obdUpdate(None)
+        if SPEEDOMETER_STYLE == False:
+            self.currSensorIndex -= 1
+            if self.currSensorIndex < 0:
+                self.currSensorIndex = len(self.sensors) - 1
+                
+            # Update sensors and GUI
+            self.obdUpdate(None)
             
             
     def OnPaint(self, event):
